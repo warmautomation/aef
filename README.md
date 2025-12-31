@@ -1,10 +1,10 @@
-# ALF - Agent Log Format
+# AEF - Agent Log Format
 
 Normalized log format for AI coding agents (Claude Code, Codex, Gemini, ReAct agents, etc.).
 
 ## Overview
 
-ALF provides a common interchange format for AI agent logs, enabling:
+AEF provides a common interchange format for AI agent logs, enabling:
 - Unified visualization across different agent frameworks
 - Cross-agent analysis and comparison
 - Tool-agnostic log processing
@@ -20,23 +20,23 @@ bun add @warmautomation/alf
 ### CLI
 
 ```bash
-# Validate an ALF file
+# Validate an AEF file
 bun alf validate logs/traces.jsonl
 
-# Convert ReActPOC traces to ALF
+# Convert ReActPOC traces to AEF
 bun alf convert --adapter reactpoc logs/belief_*.jsonl -o output.jsonl
 
-# Convert Claude Code logs to ALF
+# Convert Claude Code logs to AEF
 bun alf convert --adapter claude-code ~/.claude/projects/*/*.jsonl -o output.jsonl
 ```
 
 ### Library
 
 ```typescript
-import { validateALFEntry, reactpocAdapter, claudeCodeAdapter } from '@warmautomation/alf';
+import { validateAEFEntry, reactpocAdapter, claudeCodeAdapter } from '@warmautomation/alf';
 
 // Validate an entry
-const result = validateALFEntry(entry);
+const result = validateAEFEntry(entry);
 if (!result.valid) {
   console.error(result.errors);
 }
@@ -49,7 +49,16 @@ for await (const alfEntry of reactpocAdapter.parse(lines)) {
 
 ## Specification
 
-See [docs/ALF-spec-v0.1.md](docs/ALF-spec-v0.1.md) for the full specification.
+See [docs/AEF-spec-v0.1.md](docs/AEF-spec-v0.1.md) for the full specification.
+
+## Examples
+
+The `examples/` directory contains reference implementations:
+
+- **[warmhub-viewer](examples/warmhub-viewer/)** - Viewer plugin for WarmHub belief-conditioned agents
+  - Demonstrates custom entry rendering
+  - Shows aggregation views (sparklines, waterfall charts)
+  - Includes full plugin development guide
 
 ## Supported Adapters
 

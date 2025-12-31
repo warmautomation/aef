@@ -9,3 +9,6 @@ export * from './utils.js';
 export type { ViewerPlugin, PluginAggregation, PluginValidationResult } from './plugin.js';
 export { validatePlugin, matchesNamespace } from './plugin.js';
 export { PluginRegistry, defaultRegistry } from './registry.js';
+
+// Components (sparklines, waterfall, etc.)
+export * from './components/index.js';

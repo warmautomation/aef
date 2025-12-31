@@ -17,24 +17,24 @@ describe('PluginRegistry', () => {
   });
 
   it('finds plugin for entry type', () => {
-    const plugin: ViewerPlugin = { namespace: 'warmhub.*', name: 'WarmHub Plugin' };
+    const plugin: ViewerPlugin = { namespace: 'vendor.*', name: 'Vendor Plugin' };
     registry.register(plugin);
-    const found = registry.findPlugin('warmhub.belief.query');
-    expect(found?.name).toBe('WarmHub Plugin');
+    const found = registry.findPlugin('vendor.category.query');
+    expect(found?.name).toBe('Vendor Plugin');
   });
 
   it('returns null for unmatched entry type', () => {
-    const plugin: ViewerPlugin = { namespace: 'warmhub.*', name: 'WarmHub Plugin' };
+    const plugin: ViewerPlugin = { namespace: 'vendor.*', name: 'Vendor Plugin' };
     registry.register(plugin);
     const found = registry.findPlugin('other.custom.type');
     expect(found).toBeNull();
   });
 
   it('prioritizes more specific namespaces', () => {
-    registry.register({ namespace: 'warmhub.*', name: 'General WarmHub' });
-    registry.register({ namespace: 'warmhub.belief.*', name: 'Specific Belief' });
-    const found = registry.findPlugin('warmhub.belief.query');
-    expect(found?.name).toBe('Specific Belief');
+    registry.register({ namespace: 'vendor.*', name: 'General Vendor' });
+    registry.register({ namespace: 'vendor.category.*', name: 'Specific Category' });
+    const found = registry.findPlugin('vendor.category.query');
+    expect(found?.name).toBe('Specific Category');
   });
 
   it('rejects invalid plugins', () => {
@@ -44,13 +44,13 @@ describe('PluginRegistry', () => {
 
   it('collects all aggregations', () => {
     const plugin: ViewerPlugin = {
-      namespace: 'warmhub.*',
-      name: 'WarmHub',
-      aggregations: [{ name: 'trajectory', types: ['warmhub.belief.query'], render: () => '' }],
+      namespace: 'vendor.*',
+      name: 'Vendor',
+      aggregations: [{ name: 'summary', types: ['vendor.category.query'], render: () => '' }],
     };
     registry.register(plugin);
     const aggs = registry.getAggregations();
     expect(aggs).toHaveLength(1);
-    expect(aggs[0].name).toBe('trajectory');
+    expect(aggs[0].name).toBe('summary');
   });
 });

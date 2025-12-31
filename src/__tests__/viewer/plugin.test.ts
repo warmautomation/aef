@@ -27,18 +27,18 @@ describe('ViewerPlugin interface', () => {
 
   it('validates plugin with aggregations', () => {
     const plugin: ViewerPlugin = {
-      namespace: 'warmhub.*',
-      name: 'WarmHub Plugin',
+      namespace: 'vendor.*',
+      name: 'Vendor Plugin',
       aggregations: [
         {
-          name: 'beliefTrajectory',
-          types: ['warmhub.belief.query', 'warmhub.belief.update'],
-          render: (entries, ctx) => '<div>trajectory</div>',
+          name: 'summary',
+          types: ['vendor.category.query', 'vendor.category.update'],
+          render: (entries, ctx) => '<div>summary</div>',
         },
       ],
     };
     expect(validatePlugin(plugin).valid).toBe(true);
-    expect(plugin.aggregations?.[0].types).toContain('warmhub.belief.query');
+    expect(plugin.aggregations?.[0].types).toContain('vendor.category.query');
   });
 
   it('rejects plugin without namespace', () => {
@@ -49,12 +49,12 @@ describe('ViewerPlugin interface', () => {
 
 describe('matchesNamespace', () => {
   it('matches simple wildcard', () => {
-    expect(matchesNamespace('warmhub.belief.query', 'warmhub.*')).toBe(true);
-    expect(matchesNamespace('other.type', 'warmhub.*')).toBe(false);
+    expect(matchesNamespace('vendor.category.query', 'vendor.*')).toBe(true);
+    expect(matchesNamespace('other.type', 'vendor.*')).toBe(false);
   });
 
   it('matches specific namespace', () => {
-    expect(matchesNamespace('warmhub.belief.query', 'warmhub.belief.*')).toBe(true);
-    expect(matchesNamespace('warmhub.react.step', 'warmhub.belief.*')).toBe(false);
+    expect(matchesNamespace('vendor.category.query', 'vendor.category.*')).toBe(true);
+    expect(matchesNamespace('vendor.other.step', 'vendor.category.*')).toBe(false);
   });
 });

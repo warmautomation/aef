@@ -1,12 +1,13 @@
 #!/usr/bin/env bun
 /**
- * ALF CLI
+ * AEF CLI
  *
- * Command-line interface for ALF utilities.
+ * Command-line interface for AEF utilities.
  */
 
+import { resolve } from 'node:path';
 import { Command } from 'commander';
-import { validateALFFile } from './validator.js';
+import { validateAEFFile } from './validator.js';
 import { validateSemantics, type SemanticValidationResult } from './semantic-validator.js';
 import { reactpocAdapter } from './adapters/reactpoc.js';
 import { claudeCodeAdapter } from './adapters/claude-code.js';
@@ -14,7 +15,7 @@ import { generateHtml } from './viewer/html.js';
 import { PluginRegistry } from './viewer/registry.js';
 import type { ViewerPlugin } from './viewer/plugin.js';
 import type { LogAdapter } from './adapters/adapter.js';
-import type { ALFEntry } from './types.js';
+import type { AEFEntry } from './types.js';
 import type { ViewerOptions } from './viewer/types.js';
 
 const program = new Command();
@@ -26,13 +27,13 @@ program
 
 program
   .command('validate <file>')
-  .description('Validate an ALF JSONL file')
+  .description('Validate an AEF JSONL file')
   .option('--no-semantic', 'Skip semantic validation')
   .action(async (file: string, options: { semantic: boolean }) => {
     console.log(`Validating ${file}...`);
 
     // Syntactic validation
-    const syntacticResult = await validateALFFile(file);
+    const syntacticResult = await validateAEFFile(file);
 
     const validCount = syntacticResult.stats.core + syntacticResult.stats.extension;
     console.log(`\nSyntactic: ${syntacticResult.stats.total} entries, ${validCount} valid, ${syntacticResult.stats.invalid} invalid`);
@@ -54,7 +55,7 @@ program
       const fileHandle = Bun.file(file);
       const text = await fileHandle.text();
       const lines = text.split('\n').filter((line) => line.trim() !== '');
-      const entries: ALFEntry[] = lines.map((line) => JSON.parse(line) as ALFEntry);
+      const entries: AEFEntry[] = lines.map((line) => JSON.parse(line) as AEFEntry);
 
       semanticResult = validateSemantics(entries);
 
@@ -79,17 +80,17 @@ program
     // Exit code
     const valid = syntacticResult.valid && (!semanticResult || semanticResult.valid);
     if (valid) {
-      console.log('\n✓ Valid ALF file');
+      console.log('\n✓ Valid AEF file');
       process.exit(0);
     } else {
-      console.error('\n✗ Invalid ALF file');
+      console.error('\n✗ Invalid AEF file');
       process.exit(1);
     }
   });
 
 program
   .command('convert <file>')
-  .description('Convert a log file to ALF format')
+  .description('Convert a log file to AEF format')
   .option('-a, --adapter <name>', 'Adapter to use (reactpoc, claude-code)', 'reactpoc')
   .option('-o, --output <file>', 'Output file (default: stdout)')
   .action(async (file: string, options: { adapter: string; output?: string }) => {
@@ -126,7 +127,7 @@ program
 
     if (options.output) {
       await Bun.write(options.output, output);
-      console.log(`Wrote ${entries.length} ALF entries to ${options.output}`);
+      console.log(`Wrote ${entries.length} AEF entries to ${options.output}`);
     } else {
       console.log(output);
     }
@@ -134,7 +135,7 @@ program
 
 program
   .command('view <file>')
-  .description('Generate HTML viewer for an ALF JSONL file')
+  .description('Generate HTML viewer for an AEF JSONL file')
   .option('-o, --output <file>', 'Output file (default: stdout)')
   .option('--theme <theme>', 'Color theme (light, dark)', 'light')
   .option('--collapsed', 'Collapse tool results by default')
@@ -146,7 +147,9 @@ program
     if (options.plugin) {
       for (const pluginPath of options.plugin) {
         try {
-          const module = await import(pluginPath);
+          // Resolve relative paths to absolute
+          const absolutePath = resolve(process.cwd(), pluginPath);
+          const module = await import(absolutePath);
           const plugin: ViewerPlugin = module.default || module;
           registry.register(plugin);
           console.error(`Loaded plugin: ${plugin.name}`);
@@ -160,7 +163,7 @@ program
     const fileHandle = Bun.file(file);
     const text = await fileHandle.text();
     const lines = text.split('\n').filter((line) => line.trim() !== '');
-    const entries: ALFEntry[] = lines.map((line) => JSON.parse(line) as ALFEntry);
+    const entries: AEFEntry[] = lines.map((line) => JSON.parse(line) as AEFEntry);
 
     const viewerOptions: ViewerOptions = {
       theme: options.theme as 'light' | 'dark',
