@@ -7,9 +7,13 @@
 
 import { Command } from 'commander';
 import { validateALFFile } from './validator.js';
+import { validateSemantics, type SemanticValidationResult } from './semantic-validator.js';
 import { reactpocAdapter } from './adapters/reactpoc.js';
 import { claudeCodeAdapter } from './adapters/claude-code.js';
+import { generateHtml } from './viewer/html.js';
 import type { LogAdapter } from './adapters/adapter.js';
+import type { ALFEntry } from './types.js';
+import type { ViewerOptions } from './viewer/types.js';
 
 const program = new Command();
 
@@ -21,21 +25,62 @@ program
 program
   .command('validate <file>')
   .description('Validate an ALF JSONL file')
-  .action(async (file: string) => {
+  .option('--no-semantic', 'Skip semantic validation')
+  .action(async (file: string, options: { semantic: boolean }) => {
     console.log(`Validating ${file}...`);
-    const result = await validateALFFile(file);
 
-    if (result.valid) {
-      console.log('Valid ALF file');
-      process.exit(0);
-    } else {
-      console.error(`Found ${result.lineErrors.size} invalid entries:`);
-      for (const [line, errors] of result.lineErrors) {
+    // Syntactic validation
+    const syntacticResult = await validateALFFile(file);
+
+    const validCount = syntacticResult.stats.core + syntacticResult.stats.extension;
+    console.log(`\nSyntactic: ${syntacticResult.stats.total} entries, ${validCount} valid, ${syntacticResult.stats.invalid} invalid`);
+
+    if (!syntacticResult.valid) {
+      console.error(`\nSyntactic errors:`);
+      for (const [line, errors] of syntacticResult.lineErrors) {
         console.error(`  Line ${line}:`);
         for (const err of errors) {
           console.error(`    - ${err}`);
         }
       }
+    }
+
+    // Semantic validation (if enabled and syntactic passed)
+    let semanticResult: SemanticValidationResult | undefined;
+    if (options.semantic && syntacticResult.valid) {
+      // Re-read file and parse entries for semantic validation
+      const fileHandle = Bun.file(file);
+      const text = await fileHandle.text();
+      const lines = text.split('\n').filter((line) => line.trim() !== '');
+      const entries: ALFEntry[] = lines.map((line) => JSON.parse(line) as ALFEntry);
+
+      semanticResult = validateSemantics(entries);
+
+      console.log(`Semantic:  ${semanticResult.errors.length} errors, ${semanticResult.warnings.length} warnings`);
+
+      if (semanticResult.errors.length > 0) {
+        console.error(`\nSemantic errors:`);
+        for (const error of semanticResult.errors) {
+          console.error(`  [${error.rule}] ${error.specRef}: ${error.message}`);
+          console.error(`    Affected: ${error.entryIds.join(', ')}`);
+        }
+      }
+
+      if (semanticResult.warnings.length > 0) {
+        console.warn(`\nSemantic warnings:`);
+        for (const warning of semanticResult.warnings) {
+          console.warn(`  [${warning.rule}] ${warning.specRef}: ${warning.message}`);
+        }
+      }
+    }
+
+    // Exit code
+    const valid = syntacticResult.valid && (!semanticResult || semanticResult.valid);
+    if (valid) {
+      console.log('\n✓ Valid ALF file');
+      process.exit(0);
+    } else {
+      console.error('\n✗ Invalid ALF file');
       process.exit(1);
     }
   });
@@ -82,6 +127,33 @@ program
       console.log(`Wrote ${entries.length} ALF entries to ${options.output}`);
     } else {
       console.log(output);
+    }
+  });
+
+program
+  .command('view <file>')
+  .description('Generate HTML viewer for an ALF JSONL file')
+  .option('-o, --output <file>', 'Output file (default: stdout)')
+  .option('--theme <theme>', 'Color theme (light, dark)', 'light')
+  .option('--collapsed', 'Collapse tool results by default')
+  .action(async (file: string, options: { output?: string; theme: string; collapsed?: boolean }) => {
+    const fileHandle = Bun.file(file);
+    const text = await fileHandle.text();
+    const lines = text.split('\n').filter((line) => line.trim() !== '');
+    const entries: ALFEntry[] = lines.map((line) => JSON.parse(line) as ALFEntry);
+
+    const viewerOptions: ViewerOptions = {
+      theme: options.theme as 'light' | 'dark',
+      collapsedTools: options.collapsed ?? false,
+    };
+
+    const html = generateHtml(entries, viewerOptions);
+
+    if (options.output) {
+      await Bun.write(options.output, html);
+      console.log(`Wrote HTML viewer to ${options.output}`);
+    } else {
+      console.log(html);
     }
   });
 
