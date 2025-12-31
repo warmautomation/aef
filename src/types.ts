@@ -1,5 +1,9 @@
 /**
- * ALF Type Definitions
+ * ALF Core Type Definitions
+ *
+ * Extensions are NOT defined here - they use the base ALFEntry interface
+ * and are validated by namespace pattern matching. See docs/extensions.md
+ * for extension schema documentation.
  */
 
 // =============================================================================
@@ -63,7 +67,7 @@ export interface Message extends ALFEntry {
 }
 
 /**
- * Content block types (matches Anthropic API)
+ * Content block types
  */
 export type ContentBlock =
   | { type: 'text'; text: string }
@@ -116,101 +120,45 @@ export type CoreEntry =
   | ErrorEntry;
 
 // =============================================================================
-// Extension: warmhub.belief.*
+// Type Guards
 // =============================================================================
 
+const CORE_TYPES = [
+  'session.start',
+  'session.end',
+  'message',
+  'tool.call',
+  'tool.result',
+  'error',
+] as const;
+
 /**
- * Belief state query entry
+ * Type guard for core entry types
  */
-export interface BeliefQuery extends ALFEntry {
-  type: 'warmhub.belief.query';
-  query: string;
-  snapshot: {
-    hypotheses: Array<{
-      id: string;
-      desc: string;
-      b: number;
-      d: number;
-      u: number;
-    }>;
-    assertions: number;
-    finish_ready: boolean;
-    leading?: string;
-  };
+export function isCoreEntry(entry: ALFEntry): entry is CoreEntry {
+  return CORE_TYPES.includes(entry.type as (typeof CORE_TYPES)[number]);
 }
 
 /**
- * Belief state update entry
+ * Type guard for extension entries (namespaced types like vendor.category.type)
  */
-export interface BeliefUpdate extends ALFEntry {
-  type: 'warmhub.belief.update';
-  assertion: {
-    id: string;
-    type: string;
-    payload: Record<string, unknown>;
-    source: string;
-    content?: string;
-    consistent_with?: string[];
-    inconsistent_with?: string[];
-  };
-  deltas?: Array<{
-    hyp: string;
-    db: number;
-    dd: number;
-    du: number;
-  }>;
-  snapshot_after?: BeliefQuery['snapshot'];
-}
-
-// =============================================================================
-// Extension: warmhub.react.*
-// =============================================================================
-
-/**
- * ReAct agent step entry
- */
-export interface ReactStep extends ALFEntry {
-  type: 'warmhub.react.step';
-  step: number;
-  thought?: string;
-  action: string;
-  action_arg?: string;
-  observation?: string;
-  latency_ms?: number;
-  tokens?: { input: number; output: number };
+export function isExtensionEntry(entry: ALFEntry): boolean {
+  // Extensions have at least 2 dots (vendor.category.type) and are not core types
+  const dotCount = (entry.type.match(/\./g) || []).length;
+  return dotCount >= 2 && !isCoreEntry(entry);
 }
 
 /**
- * ReAct episode summary entry
+ * Check if an entry has valid base fields (for extension validation)
  */
-export interface ReactEpisode extends ALFEntry {
-  type: 'warmhub.react.episode';
-  question_id: string;
-  question: string;
-  gold_answer: string;
-  predicted_answer?: string;
-  status: 'success' | 'max_steps' | 'error' | 'parse_failure' | 'timeout';
-  metrics: {
-    em: number;
-    f1: number;
-    tool_calls: number;
-    total_latency_ms: number;
-    total_tokens: number;
-  };
-  belief_metrics?: {
-    hypothesis_reversals: number;
-    final_confidence: number;
-    uncertainty_reduction: number;
-    finish_gate_respected: boolean;
-  };
+export function hasValidBaseFields(entry: unknown): entry is ALFEntry {
+  if (typeof entry !== 'object' || entry === null) return false;
+  const e = entry as Record<string, unknown>;
+  return (
+    e.v === 1 &&
+    typeof e.id === 'string' &&
+    typeof e.ts === 'number' &&
+    typeof e.type === 'string' &&
+    typeof e.sid === 'string'
+  );
 }
-
-/**
- * Union of all extension entry types
- */
-export type ExtensionEntry = BeliefQuery | BeliefUpdate | ReactStep | ReactEpisode;
-
-/**
- * Any ALF entry (core or extension)
- */
-export type AnyALFEntry = CoreEntry | ExtensionEntry;

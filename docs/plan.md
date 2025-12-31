@@ -2,79 +2,144 @@
 
 ## Overview
 
-Implement a normalized log format specification (ALF v0.1) to enable cross-framework visualization and analysis for AI coding agents. This plan covers creating the standalone specification document, JSON Schema validation, and adapters for ReActPOC and Claude Code log formats.
+Implement a normalized log format specification (ALF v0.1) to enable cross-framework visualization and analysis for AI coding agents. ALF aims to become the common interchange format that enables unified tooling across the fragmented agent ecosystem.
+
+## Strategic Principles
+
+### 1. Lean Hard into Adapters
+Adapters are the primary adoption vector. Each adapter brings its community and serves as a forcing function for schema robustness.
+
+| Adapter | Priority | Rationale |
+|---------|----------|-----------|
+| Claude Code | P0 | High popularity, reference implementation |
+| Codex CLI | P1 | OpenAI ecosystem, validates cross-vendor story |
+| Gemini CLI | P1 | Google ecosystem, growing adoption |
+| LangChain/LangGraph | P2 | Massive community, complex traces |
+| ReActPOC | P2 | Internal dogfooding, belief state extension test |
+
+### 2. Minimal Core, Extensible Schema
+Core types capture universal agent concepts only. Domain-specific semantics (belief states, ReAct reasoning, planning) live in namespaced extensions.
+
+**Core types**: `session.start`, `session.end`, `message`, `tool.call`, `tool.result`, `error`
+
+**Extensions**: `warmhub.belief.*`, `warmhub.react.*`, `langchain.chain.*`, etc.
+
+Extensions are documented schemas that validate via namespace convention, not compile-time types in the core package.
+
+### 3. Streamable-First
+JSONL append-only format enables:
+- `tail -f` watching
+- UNIX pipeline composition (`cat log.jsonl | jq | alf validate`)
+- Incremental processing without loading full files
+
+Adapter interfaces must support streaming from day one, even if v0.1 implementations are batch-oriented.
+
+### 4. OpenTelemetry as Cousin
+ALF and OTel serve different purposes but should interoperate cleanly.
+
+| ALF Concept | OTel Equivalent |
+|-------------|-----------------|
+| `sid` (session) | Trace ID |
+| `id` (entry) | Span ID |
+| `pid` (parent) | Parent Span ID |
+| `tool.call` → `tool.result` | Span (kind=CLIENT) |
+| `message` | Event / Log |
+| Extension fields | Span Attributes |
+
+Future work: `alf export --format otlp` for OTel collector ingestion.
+
+---
 
 ## Repository Structure
 
 ```
 alf/
 ├── docs/
-│   ├── plan.md              # This file
-│   └── ALF-spec-v0.1.md     # Standalone specification
+│   ├── plan.md                 # This file
+│   ├── ALF-spec-v0.1.md        # Standalone specification
+│   ├── extensions.md           # Extension schemas (warmhub, etc.)
+│   └── otel-mapping.md         # OTel interoperability guide
 ├── src/
-│   ├── index.ts             # Public exports
-│   ├── types.ts             # TypeScript types
-│   ├── validator.ts         # Validation utilities
-│   ├── cli.ts               # CLI tool
+│   ├── index.ts                # Public exports
+│   ├── types.ts                # Core TypeScript types only
+│   ├── validator.ts            # Validation utilities
+│   ├── cli.ts                  # CLI tool
 │   ├── schema/
-│   │   └── core.schema.json # JSON Schema
+│   │   └── core.schema.json    # Core JSON Schema
 │   ├── adapters/
-│   │   ├── index.ts         # Adapter exports
-│   │   ├── adapter.ts       # Base adapter interface
-│   │   ├── reactpoc.ts      # ReActPOC adapter
-│   │   └── claude-code.ts   # Claude Code adapter
+│   │   ├── index.ts            # Adapter exports
+│   │   ├── adapter.ts          # Base adapter interface
+│   │   ├── claude-code.ts      # Claude Code adapter
+│   │   ├── codex.ts            # Codex CLI adapter
+│   │   ├── gemini.ts           # Gemini CLI adapter
+│   │   └── reactpoc.ts         # ReActPOC adapter
 │   └── __tests__/
 │       ├── validator.test.ts
+│       ├── extensions.test.ts  # Extension validation tests
 │       └── adapters/
 ├── package.json
 └── tsconfig.json
 ```
 
+---
+
 ## Current State Analysis
 
 ### Existing Formats
-
-**ReActPOC**: Episode-level JSONL in `logs/*.jsonl`
-- Structure: `EpisodeResult` with steps, metrics, belief traces
-- Contains: questionId, question, goldAnswer, predictedAnswer, status, steps[], metrics, beliefTrace[], beliefMetrics
 
 **Claude Code**: Session-level JSONL in `~/.claude/projects/<project>/<session>.jsonl`
 - Entry types: `file-history-snapshot`, `user`, `assistant`
 - Assistant messages contain: content blocks (text, tool_use, tool_result), model, usage
 - Each entry has: uuid, parentUuid, sessionId, timestamp, type, message
 
+**Codex CLI**: TBD - requires format analysis
+
+**Gemini CLI**: TBD - requires format analysis
+
+**ReActPOC**: Episode-level JSONL in `logs/*.jsonl`
+- Structure: `EpisodeResult` with steps, metrics, belief traces
+- Contains: questionId, question, goldAnswer, predictedAnswer, status, steps[], metrics, beliefTrace[], beliefMetrics
+
+---
+
 ## Desired End State
 
 After implementing this plan:
 
 1. **Standalone ALF specification** exists at `docs/ALF-spec-v0.1.md`
-2. **JSON Schema** exists at `src/schema/` for runtime validation
-3. **reactpoc-adapter** transforms ReActPOC traces to ALF format
-4. **claude-code-adapter** transforms Claude Code logs to ALF format
-5. **CLI tool** provides `alf validate` and `alf convert` commands
+2. **Extension documentation** exists at `docs/extensions.md` with warmhub schemas as examples
+3. **JSON Schema** validates core types; extensions validate by namespace pattern
+4. **Adapters** for Claude Code, Codex CLI, Gemini CLI, ReActPOC
+5. **CLI tool** provides `alf validate`, `alf convert`, `alf info` commands
+6. **OTel mapping** documented for future exporter work
 
 ### Verification
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Validate a log file against ALF schema
-pnpm alf validate /path/to/logs/*.jsonl
-
-# Convert ReActPOC trace to ALF
-pnpm alf convert --adapter reactpoc /path/to/logs/*.jsonl -o output.jsonl
+bun alf validate /path/to/logs/*.jsonl
 
 # Convert Claude Code log to ALF
-pnpm alf convert --adapter claude-code ~/.claude/projects/<project>/*.jsonl -o output.jsonl
+bun alf convert --adapter claude-code ~/.claude/projects/<project>/*.jsonl
+
+# Convert with streaming (future)
+tail -f session.jsonl | bun alf convert --adapter claude-code --streaming
+
+# Inspect log metadata
+bun alf info /path/to/log.jsonl
 ```
 
-## What We're NOT Doing
+---
 
-- Not building real-time streaming adapters (batch transformation only)
+## What We're NOT Doing (v0.1)
+
 - Not modifying existing trace writers to emit ALF natively
-- Not building adapters for Codex, Gemini, or other agents (future work)
-- Not building a unified viewer (consumers will import this package)
+- Not building a unified viewer (consumers import this package)
+- Not building OTel exporters (mapping documented for future work)
+- Not requiring adapters to support streaming (interface allows it, implementation is batch)
 
 ---
 
@@ -82,11 +147,9 @@ pnpm alf convert --adapter claude-code ~/.claude/projects/<project>/*.jsonl -o o
 
 ### Overview
 
-Create a standalone, version-controlled specification document that can be shared independently.
+Create a standalone, version-controlled specification that can be shared independently.
 
-### Changes Required
-
-#### 1. Create Specification Document
+### Deliverables
 
 **File**: `docs/ALF-spec-v0.1.md`
 
@@ -95,9 +158,9 @@ Create a standalone, version-controlled specification document that can be share
 
 ## Abstract
 
-ALF is a normalized log format for AI coding agent traces. It enables cross-framework
-visualization and analysis by providing a common schema for session, message, tool,
-and extension events.
+ALF is a normalized log format for AI agent traces. It enables cross-framework
+visualization and analysis by providing a common schema for session, message,
+tool, and extension events.
 
 ## Status
 
@@ -111,13 +174,15 @@ ALF provides a common interchange format for AI agent logs, enabling:
 - Unified visualization across different agent frameworks
 - Cross-agent analysis and comparison
 - Tool-agnostic log processing
+- Pipeline composition with UNIX tools
 
 ### 1.2 Design Principles
 
 1. **Append-only JSONL** - Streamable, no in-place edits
-2. **Core + Extensions** - Required fields + namespaced extensions
+2. **Core + Extensions** - Minimal required fields + namespaced extensions
 3. **Future-proof** - Version field, unknown field tolerance
 4. **Tool-agnostic** - No assumptions about rendering context
+5. **OTel-compatible** - Clear mapping to OpenTelemetry concepts
 
 ## 2. Core Schema
 
@@ -144,7 +209,7 @@ Every ALF entry MUST contain these fields:
 - `tool.result` - Tool response
 - `error` - Error event
 
-[Full schema definitions...]
+[Full schema definitions for each type...]
 
 ## 3. Extensions
 
@@ -152,29 +217,47 @@ Every ALF entry MUST contain these fields:
 
 Extensions use dotted namespaces: `<vendor>.<category>.<type>`
 
+Reserved vendor prefixes:
+- `alf.*` - Official ALF extensions
+- `otel.*` - OpenTelemetry compatibility
+
 Examples:
 - `warmhub.belief.query` - Belief state query
-- `warmhub.belief.update` - Belief state update
 - `warmhub.react.step` - ReAct agent step
-- `warmhub.react.episode` - ReAct episode summary
+- `langchain.chain.start` - LangChain chain execution
+
+### 3.2 Extension Validation
+
+Extensions MUST include all base entry fields. Additional fields are
+validated against extension-specific schemas when available, or passed
+through when schema is unknown.
 
 ## 4. File Format
 
 **Format**: JSONL (newline-delimited JSON)
 - One entry per line
 - UTF-8 encoding
+- No trailing commas
 - Optional gzip compression (`.jsonl.gz`)
 
-**Naming Convention**:
+**Naming Convention** (recommended):
 ```
-<agent>_<type>_<session-id>_<timestamp>.jsonl
+<agent>_<session-id>_<timestamp>.alf.jsonl
 ```
+
+## 5. OpenTelemetry Mapping
+
+See Appendix B for detailed mapping between ALF and OTel concepts.
 
 ## Appendix A: JSON Schema
 
 [Reference to src/schema/core.schema.json]
 
-## Appendix B: Examples
+## Appendix B: OpenTelemetry Mapping
+
+[Detailed mapping table and conversion rules]
+
+## Appendix C: Examples
 
 [Complete examples of each entry type]
 ```
@@ -184,23 +267,38 @@ Examples:
 - [ ] File exists at `docs/ALF-spec-v0.1.md`
 - [ ] Specification is self-contained and readable
 - [ ] All core entry types are fully defined
+- [ ] Extension namespace convention is clear
+- [ ] OTel mapping is documented
 
 ---
 
-## Phase 1: JSON Schema and Types
+## Phase 1: Core Schema and Types
 
 ### Overview
 
-Create JSON Schema files and TypeScript types for validation.
+Create JSON Schema and TypeScript types for **core types only**. Extensions are documented separately and validated by pattern.
 
-### Changes Required
+### Deliverables
 
-#### 1. TypeScript Types
+#### 1. Core TypeScript Types
 
 **File**: `src/types.ts`
 
 ```typescript
-// Core ALF entry base type
+/**
+ * ALF Core Type Definitions
+ *
+ * Extensions are NOT defined here - they use the base ALFEntry interface
+ * and are validated by namespace pattern matching.
+ */
+
+// =============================================================================
+// Core Types
+// =============================================================================
+
+/**
+ * Base ALF entry - all entries must have these fields
+ */
 export interface ALFEntry {
   /** Schema version */
   v: 1;
@@ -218,7 +316,9 @@ export interface ALFEntry {
   seq?: number;
 }
 
-// Core entry types
+/**
+ * Session start entry
+ */
 export interface SessionStart extends ALFEntry {
   type: 'session.start';
   agent: string;
@@ -228,6 +328,9 @@ export interface SessionStart extends ALFEntry {
   meta?: Record<string, unknown>;
 }
 
+/**
+ * Session end entry
+ */
 export interface SessionEnd extends ALFEntry {
   type: 'session.end';
   status: 'complete' | 'error' | 'timeout' | 'user_abort';
@@ -239,6 +342,9 @@ export interface SessionEnd extends ALFEntry {
   };
 }
 
+/**
+ * Message entry (user, assistant, or system)
+ */
 export interface Message extends ALFEntry {
   type: 'message';
   role: 'user' | 'assistant' | 'system';
@@ -246,11 +352,17 @@ export interface Message extends ALFEntry {
   tokens?: { input?: number; output?: number; cached?: number };
 }
 
+/**
+ * Content block types
+ */
 export type ContentBlock =
   | { type: 'text'; text: string }
   | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
   | { type: 'tool_result'; tool_use_id: string; content: string; is_error?: boolean };
 
+/**
+ * Tool call entry
+ */
 export interface ToolCall extends ALFEntry {
   type: 'tool.call';
   tool: string;
@@ -258,6 +370,9 @@ export interface ToolCall extends ALFEntry {
   call_id?: string;
 }
 
+/**
+ * Tool result entry
+ */
 export interface ToolResult extends ALFEntry {
   type: 'tool.result';
   tool: string;
@@ -268,6 +383,9 @@ export interface ToolResult extends ALFEntry {
   error?: { code?: string; message: string };
 }
 
+/**
+ * Error entry
+ */
 export interface ErrorEntry extends ALFEntry {
   type: 'error';
   code?: string;
@@ -276,6 +394,9 @@ export interface ErrorEntry extends ALFEntry {
   recoverable?: boolean;
 }
 
+/**
+ * Union of all core entry types
+ */
 export type CoreEntry =
   | SessionStart
   | SessionEnd
@@ -284,76 +405,36 @@ export type CoreEntry =
   | ToolResult
   | ErrorEntry;
 
-// Extension: warmhub.belief.*
-export interface BeliefQuery extends ALFEntry {
-  type: 'warmhub.belief.query';
-  query: string;
-  snapshot: {
-    hypotheses: Array<{ id: string; desc: string; b: number; d: number; u: number }>;
-    assertions: number;
-    finish_ready: boolean;
-    leading?: string;
-  };
+/**
+ * Type guard for core entry types
+ */
+export function isCoreEntry(entry: ALFEntry): entry is CoreEntry {
+  return [
+    'session.start',
+    'session.end',
+    'message',
+    'tool.call',
+    'tool.result',
+    'error'
+  ].includes(entry.type);
 }
 
-export interface BeliefUpdate extends ALFEntry {
-  type: 'warmhub.belief.update';
-  assertion: {
-    id: string;
-    type: string;
-    payload: Record<string, unknown>;
-    source: string;
-    content?: string;
-    consistent_with?: string[];
-    inconsistent_with?: string[];
-  };
-  deltas?: Array<{ hyp: string; db: number; dd: number; du: number }>;
-  snapshot_after?: BeliefQuery['snapshot'];
+/**
+ * Type guard for extension entries (namespaced types)
+ */
+export function isExtensionEntry(entry: ALFEntry): boolean {
+  return entry.type.includes('.') && !isCoreEntry(entry);
 }
-
-// Extension: warmhub.react.*
-export interface ReactStep extends ALFEntry {
-  type: 'warmhub.react.step';
-  step: number;
-  thought?: string;
-  action: string;
-  action_arg?: string;
-  observation?: string;
-  latency_ms?: number;
-  tokens?: { input: number; output: number };
-}
-
-export interface ReactEpisode extends ALFEntry {
-  type: 'warmhub.react.episode';
-  question_id: string;
-  question: string;
-  gold_answer: string;
-  predicted_answer?: string;
-  status: 'success' | 'max_steps' | 'error' | 'parse_failure' | 'timeout';
-  metrics: {
-    em: number;
-    f1: number;
-    tool_calls: number;
-    total_latency_ms: number;
-    total_tokens: number;
-  };
-  belief_metrics?: {
-    hypothesis_reversals: number;
-    final_confidence: number;
-    uncertainty_reduction: number;
-    finish_gate_respected: boolean;
-  };
-}
-
-export type ExtensionEntry = BeliefQuery | BeliefUpdate | ReactStep | ReactEpisode;
-export type AnyALFEntry = CoreEntry | ExtensionEntry;
 ```
 
 #### 2. JSON Schema
 
 **File**: `src/schema/core.schema.json`
 
-Full JSON Schema for validating ALF entries (see original plan for complete schema).
+Schema validates:
+- Base entry fields (required for all)
+- Core type-specific fields
+- Extension entries pass if they have valid base fields and namespaced type
 
 #### 3. Validator
 
@@ -361,118 +442,128 @@ Full JSON Schema for validating ALF entries (see original plan for complete sche
 
 ```typescript
 import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-import type { AnyALFEntry } from './types.js';
-import coreSchema from './schema/core.schema.json' assert { type: 'json' };
-
-const ajv = new Ajv({ allErrors: true, strict: false });
-addFormats(ajv);
-const validateCore = ajv.compile(coreSchema);
+import type { ALFEntry, CoreEntry } from './types.js';
 
 export interface ValidationResult {
   valid: boolean;
   errors?: string[];
+  entryType: 'core' | 'extension' | 'invalid';
 }
 
 export function validateALFEntry(entry: unknown): ValidationResult {
-  const valid = validateCore(entry);
-  if (valid) return { valid: true };
-  return {
-    valid: false,
-    errors: validateCore.errors?.map(e => `${e.instancePath}: ${e.message}`) ?? [],
-  };
+  // 1. Validate base fields
+  // 2. If core type, validate type-specific schema
+  // 3. If extension (namespaced), validate base fields only
+  // 4. Return result with entry classification
 }
 
-export async function validateALFFile(
-  filePath: string
-): Promise<{ valid: boolean; lineErrors: Map<number, string[]> }> {
-  // Implementation: read file line by line, validate each entry
+export async function* validateALFStream(
+  lines: AsyncIterable<string>
+): AsyncGenerator<{ line: number; result: ValidationResult }> {
+  // Streaming validation for large files
 }
 ```
 
 ### Success Criteria
 
-- [ ] Types compile: `pnpm typecheck`
-- [ ] Schema validates test fixtures
-- [ ] `pnpm alf validate` command works
+- [ ] Types compile: `bun typecheck`
+- [ ] Core entries validate against schema
+- [ ] Extension entries with valid base fields pass validation
+- [ ] Extension entries are classified correctly
+- [ ] Streaming validator works with `AsyncIterable`
 
 ---
 
-## Phase 2: ReActPOC Adapter
+## Phase 2: Claude Code Adapter
 
 ### Overview
 
-Transform ReActPOC episode traces into ALF format.
+Transform Claude Code session logs into ALF format. This is the highest-value adapter due to Claude Code's popularity.
 
-### Changes Required
+### Deliverables
 
 #### 1. Adapter Interface
 
 **File**: `src/adapters/adapter.ts`
 
 ```typescript
-import type { AnyALFEntry } from '../types.js';
+import type { ALFEntry } from '../types.js';
+
+export interface AdapterOptions {
+  /** Generate sequential IDs instead of random */
+  sequentialIds?: boolean;
+  /** Include source line numbers in output */
+  includeSourceRef?: boolean;
+}
 
 export interface LogAdapter<TSource = unknown> {
   readonly id: string;
   readonly name: string;
+  readonly description: string;
+  /** File patterns this adapter handles */
   readonly patterns: string[];
-  parse(source: TSource): AsyncIterable<AnyALFEntry>;
+
+  /** Parse source into ALF entries (batch) */
+  parse(source: TSource, options?: AdapterOptions): AsyncIterable<ALFEntry>;
+
+  /** Parse streaming input (optional, for streamable-first) */
+  parseStream?(
+    stream: AsyncIterable<string>,
+    options?: AdapterOptions
+  ): AsyncIterable<ALFEntry>;
 }
 
 export function generateId(): string {
+  // UUIDv7-like: timestamp prefix + random suffix
   const ts = Date.now().toString(16).padStart(12, '0');
-  const rand = Math.random().toString(16).slice(2, 10);
+  const rand = crypto.randomUUID().slice(0, 8);
   return `${ts}-${rand}`;
 }
 ```
-
-#### 2. ReActPOC Adapter
-
-**File**: `src/adapters/reactpoc.ts`
-
-Transforms episode-centric format to event-centric ALF entries:
-- Episode → session.start + messages + steps + session.end
-- Steps → warmhub.react.step + tool.call + tool.result
-- Belief entries → warmhub.belief.query / warmhub.belief.update
-
-### Success Criteria
-
-- [ ] Adapter compiles
-- [ ] Transforms ReActPOC traces correctly
-- [ ] Output validates against schema
-
----
-
-## Phase 3: Claude Code Adapter
-
-### Overview
-
-Transform Claude Code session logs into ALF format.
-
-### Changes Required
-
-#### 1. Claude Code Types
-
-**File**: `src/adapters/claude-code-types.ts`
-
-Types for Claude Code log entries (user, assistant, file-history-snapshot).
 
 #### 2. Claude Code Adapter
 
 **File**: `src/adapters/claude-code.ts`
 
-Transforms event-centric Claude Code logs:
-- First entry → session.start
-- user entries → message (role: user/system)
-- assistant entries → message + tool.call entries
-- End of file → session.end with summary
+Transforms Claude Code logs:
+- First entry → `session.start`
+- `user` entries → `message` (role: user)
+- `assistant` entries → `message` + extracted `tool.call` entries
+- Tool results in content → `tool.result` entries
+- End of file → `session.end` with computed summary
 
 ### Success Criteria
 
 - [ ] Adapter compiles
-- [ ] Transforms Claude Code logs correctly
+- [ ] Transforms real Claude Code logs correctly
 - [ ] Session boundaries detected properly
+- [ ] Tool calls extracted from content blocks
+- [ ] Output validates against ALF schema
+
+---
+
+## Phase 3: Codex CLI Adapter
+
+### Overview
+
+Transform Codex CLI logs into ALF format. Validates cross-vendor story.
+
+### Research Required
+
+- [ ] Locate Codex CLI log format documentation
+- [ ] Analyze sample log files
+- [ ] Document format in `docs/formats/codex.md`
+
+### Deliverables
+
+**File**: `src/adapters/codex.ts`
+
+### Success Criteria
+
+- [ ] Format documented
+- [ ] Adapter compiles
+- [ ] Transforms Codex logs correctly
+- [ ] Output validates against ALF schema
 
 ---
 
@@ -480,18 +571,15 @@ Transforms event-centric Claude Code logs:
 
 ### Overview
 
-Command-line interface for validation and conversion.
+Command-line interface for validation, conversion, and inspection.
 
-### Changes Required
+### Deliverables
 
 **File**: `src/cli.ts`
 
 ```typescript
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { validateALFFile } from './validator.js';
-import { reactpocAdapter } from './adapters/reactpoc.js';
-import { claudeCodeAdapter } from './adapters/claude-code.js';
 
 const program = new Command();
 
@@ -501,46 +589,332 @@ program
   .version('0.1.0');
 
 program
-  .command('validate <file>')
-  .description('Validate an ALF JSONL file')
-  .action(async (file) => { /* ... */ });
+  .command('validate <file...>')
+  .description('Validate ALF JSONL file(s)')
+  .option('--strict', 'Fail on extension entries without schema')
+  .option('--quiet', 'Only output errors')
+  .action(async (files, options) => { /* ... */ });
 
 program
   .command('convert <file>')
   .description('Convert a log file to ALF format')
-  .option('-a, --adapter <name>', 'Adapter (reactpoc, claude-code)', 'reactpoc')
+  .requiredOption('-a, --adapter <name>', 'Adapter (claude-code, codex, gemini, reactpoc)')
   .option('-o, --output <file>', 'Output file (default: stdout)')
+  .option('--validate', 'Validate output entries')
   .action(async (file, options) => { /* ... */ });
+
+program
+  .command('info <file>')
+  .description('Display log file metadata')
+  .action(async (file) => {
+    // Show: session count, entry counts by type, time range, agents
+  });
+
+program
+  .command('adapters')
+  .description('List available adapters')
+  .action(() => { /* ... */ });
 
 program.parse();
 ```
 
 ### Success Criteria
 
-- [ ] `pnpm alf validate` works
-- [ ] `pnpm alf convert --adapter reactpoc` works
-- [ ] `pnpm alf convert --adapter claude-code` works
+- [ ] `bun alf validate` works with helpful output
+- [ ] `bun alf convert --adapter claude-code` works
+- [ ] `bun alf info` shows useful metadata
+- [ ] `bun alf adapters` lists available adapters
+- [ ] Exit codes are correct (0 success, 1 error)
+
+---
+
+## Phase 5: Gemini CLI Adapter
+
+### Overview
+
+Transform Gemini CLI logs into ALF format.
+
+### Research Required
+
+- [ ] Locate Gemini CLI log format documentation
+- [ ] Analyze sample log files
+- [ ] Document format in `docs/formats/gemini.md`
+
+### Deliverables
+
+**File**: `src/adapters/gemini.ts`
+
+---
+
+## Phase 6: ReActPOC Adapter + Extension Tests
+
+### Overview
+
+Transform ReActPOC traces and use them to validate the extension model.
+
+### Deliverables
+
+#### 1. Extension Documentation
+
+**File**: `docs/extensions.md`
+
+```markdown
+# ALF Extension Schemas
+
+This document defines extension schemas for domain-specific agent concepts.
+Extensions serve as examples for implementing custom schemas.
+
+## warmhub.belief.*
+
+Belief state tracking for hypothesis-driven agents.
+
+### warmhub.belief.query
+
+Captures a belief state query with hypothesis snapshot.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| query | string | Yes | The question being evaluated |
+| snapshot | object | Yes | Current belief state |
+| snapshot.hypotheses | array | Yes | List of hypotheses with B/D/U values |
+| snapshot.assertions | integer | Yes | Number of assertions processed |
+| snapshot.finish_ready | boolean | Yes | Whether finish gate is satisfied |
+| snapshot.leading | string | No | ID of leading hypothesis |
+
+### warmhub.belief.update
+
+Captures a belief state update from new evidence.
+
+[Schema definition...]
+
+## warmhub.react.*
+
+ReAct agent step tracking.
+
+### warmhub.react.step
+
+[Schema definition...]
+
+### warmhub.react.episode
+
+[Schema definition...]
+```
+
+#### 2. ReActPOC Adapter
+
+**File**: `src/adapters/reactpoc.ts`
+
+Transforms episode-centric format to event-centric ALF:
+- Episode → `session.start` + messages + steps + `session.end`
+- Steps → `warmhub.react.step` + `tool.call` + `tool.result`
+- Belief entries → `warmhub.belief.query` / `warmhub.belief.update`
+
+#### 3. Extension Validation Tests
+
+**File**: `src/__tests__/extensions.test.ts`
+
+```typescript
+describe('Extension validation', () => {
+  it('validates warmhub.belief.query entries', () => {
+    // Entries should pass base validation
+    // Additional warmhub-specific validation (optional schema)
+  });
+
+  it('passes unknown extensions with valid base fields', () => {
+    // Extensions without registered schema should still validate base
+  });
+
+  it('classifies entries correctly', () => {
+    // Core vs extension classification
+  });
+});
+```
+
+### Success Criteria
+
+- [ ] Extension schemas documented
+- [ ] ReActPOC adapter produces valid extension entries
+- [ ] Extension entries validate correctly
+- [ ] Unknown extensions pass with valid base fields
+- [ ] Tests cover extension model edge cases
 
 ---
 
 ## Testing Strategy
 
+### Test Runner: Bun
+
+Use Bun's native test runner (Jest-compatible API, zero dependencies).
+
+**package.json scripts**:
+```json
+{
+  "scripts": {
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage"
+  }
+}
+```
+
+**Commands**:
+```bash
+# Run all tests
+bun test
+
+# Watch mode
+bun test --watch
+
+# Coverage report
+bun test --coverage
+
+# Run specific test file
+bun test src/__tests__/validator.test.ts
+
+# Run tests matching pattern
+bun test --test-name-pattern "extension"
+```
+
 ### Unit Tests
 
-- `src/__tests__/validator.test.ts` - Schema validation
-- `src/__tests__/adapters/reactpoc.test.ts` - ReActPOC transformation
-- `src/__tests__/adapters/claude-code.test.ts` - Claude Code transformation
+- `src/__tests__/validator.test.ts` - Core schema validation
+- `src/__tests__/extensions.test.ts` - Extension validation model
+- `src/__tests__/adapters/*.test.ts` - Each adapter
+
+**Example test structure**:
+```typescript
+// src/__tests__/validator.test.ts
+import { describe, it, expect } from 'bun:test';
+import { validateALFEntry } from '../validator';
+
+describe('validateALFEntry', () => {
+  it('validates a valid session.start entry', () => {
+    const entry = {
+      v: 1,
+      id: '0194a1b2c3d4-e5f6',
+      ts: 1704067200000,
+      type: 'session.start',
+      sid: 'session-abc123',
+      agent: 'claude-code',
+    };
+    const result = validateALFEntry(entry);
+    expect(result.valid).toBe(true);
+    expect(result.entryType).toBe('core');
+  });
+
+  it('rejects entry missing required fields', () => {
+    const entry = { v: 1, type: 'message' };
+    const result = validateALFEntry(entry);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('/id: Required');
+  });
+
+  it('passes unknown extensions with valid base fields', () => {
+    const entry = {
+      v: 1,
+      id: '0194a1b2c3d4-e5f6',
+      ts: 1704067200000,
+      type: 'acme.custom.widget',
+      sid: 'session-abc123',
+      customField: 'allowed',
+    };
+    const result = validateALFEntry(entry);
+    expect(result.valid).toBe(true);
+    expect(result.entryType).toBe('extension');
+  });
+});
+```
 
 ### Integration Tests
 
-- Transform real trace files
-- Validate output against schema
+- Transform real trace files from each format
+- Validate all output against schema
 - Test CLI commands end-to-end
+- Test streaming validation with large files
+
+**CLI integration test example**:
+```typescript
+// src/__tests__/cli.test.ts
+import { describe, it, expect } from 'bun:test';
+import { $ } from 'bun';
+
+describe('alf cli', () => {
+  it('validates a valid ALF file', async () => {
+    const result = await $`bun src/cli.ts validate fixtures/alf/valid-core.jsonl`.quiet();
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('converts claude-code logs', async () => {
+    const result = await $`bun src/cli.ts convert -a claude-code fixtures/claude-code/simple-session.jsonl`.quiet();
+    expect(result.exitCode).toBe(0);
+    const lines = result.stdout.toString().trim().split('\n');
+    expect(lines.length).toBeGreaterThan(0);
+    expect(() => JSON.parse(lines[0])).not.toThrow();
+  });
+});
+```
+
+### Test Fixtures
+
+```
+fixtures/
+├── claude-code/
+│   ├── simple-session.jsonl
+│   └── multi-tool-session.jsonl
+├── codex/
+│   └── sample.jsonl
+├── gemini/
+│   └── sample.jsonl
+├── reactpoc/
+│   └── episode-with-belief.jsonl
+└── alf/
+    ├── valid-core.jsonl
+    ├── valid-extension.jsonl
+    └── invalid-*.jsonl
+```
+
+### Coverage Requirements
+
+Target: **80% line coverage** for core modules (`types.ts`, `validator.ts`, adapters).
+
+```bash
+# Generate coverage report
+bun test --coverage
+
+# Coverage output shows:
+# - Line coverage per file
+# - Uncovered line numbers
+# - Overall project coverage
+```
+
+---
+
+## Future Work (Post v0.1)
+
+### Adapters
+- LangChain/LangGraph adapter
+- AutoGPT adapter
+- Custom agent SDK
+
+### OTel Integration
+- `alf export --format otlp` exporter
+- OTel collector receiver
+- Span context propagation
+
+### Tooling
+- VS Code extension for ALF viewing
+- Web-based trace viewer
+- Real-time streaming adapter implementations
+
+### Schema Evolution
+- v0.2 schema with learnings from v0.1 adoption
+- Schema migration tooling
 
 ---
 
 ## References
 
-- Original research: ReActPOC `specs/shared/ALF-agent-log-format-spec.md`
-- ReActPOC types: `src/agent/types.ts`, `src/hotpotqa/types.ts`
 - Claude Code logs: `~/.claude/projects/<project>/*.jsonl`
+- OpenTelemetry spec: https://opentelemetry.io/docs/specs/
+- JSONL spec: https://jsonlines.org/
+- UUIDv7 spec: RFC 9562
