@@ -11,6 +11,8 @@ import { validateSemantics, type SemanticValidationResult } from './semantic-val
 import { reactpocAdapter } from './adapters/reactpoc.js';
 import { claudeCodeAdapter } from './adapters/claude-code.js';
 import { generateHtml } from './viewer/html.js';
+import { PluginRegistry } from './viewer/registry.js';
+import type { ViewerPlugin } from './viewer/plugin.js';
 import type { LogAdapter } from './adapters/adapter.js';
 import type { ALFEntry } from './types.js';
 import type { ViewerOptions } from './viewer/types.js';
@@ -136,7 +138,25 @@ program
   .option('-o, --output <file>', 'Output file (default: stdout)')
   .option('--theme <theme>', 'Color theme (light, dark)', 'light')
   .option('--collapsed', 'Collapse tool results by default')
-  .action(async (file: string, options: { output?: string; theme: string; collapsed?: boolean }) => {
+  .option('--plugin <path...>', 'Plugin file(s) to load')
+  .action(async (file: string, options: { output?: string; theme: string; collapsed?: boolean; plugin?: string[] }) => {
+    // Create registry and load plugins
+    const registry = new PluginRegistry();
+
+    if (options.plugin) {
+      for (const pluginPath of options.plugin) {
+        try {
+          const module = await import(pluginPath);
+          const plugin: ViewerPlugin = module.default || module;
+          registry.register(plugin);
+          console.error(`Loaded plugin: ${plugin.name}`);
+        } catch (err) {
+          console.error(`Failed to load plugin ${pluginPath}:`, err);
+          process.exit(1);
+        }
+      }
+    }
+
     const fileHandle = Bun.file(file);
     const text = await fileHandle.text();
     const lines = text.split('\n').filter((line) => line.trim() !== '');
@@ -147,11 +167,11 @@ program
       collapsedTools: options.collapsed ?? false,
     };
 
-    const html = generateHtml(entries, viewerOptions);
+    const html = generateHtml(entries, viewerOptions, registry);
 
     if (options.output) {
       await Bun.write(options.output, html);
-      console.log(`Wrote HTML viewer to ${options.output}`);
+      console.error(`Wrote HTML viewer to ${options.output}`);
     } else {
       console.log(html);
     }

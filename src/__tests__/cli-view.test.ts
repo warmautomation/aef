@@ -48,3 +48,39 @@ describe('alf view command', () => {
     expect(result.stdout.toString()).toContain('#1e1e1e');
   });
 });
+
+describe('alf view with plugins', () => {
+  let tmpDir: string;
+  let testFile: string;
+
+  beforeAll(async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'alf-test-'));
+    testFile = join(tmpDir, 'test.jsonl');
+
+    const entries = [
+      '{"v":1,"id":"s1","ts":1704067200000,"type":"session.start","sid":"test","agent":"test-agent"}',
+      '{"v":1,"id":"m1","ts":1704067201000,"type":"message","sid":"test","role":"user","content":"Hello"}',
+      '{"v":1,"id":"s2","ts":1704067300000,"type":"session.end","sid":"test","status":"complete"}',
+    ];
+    await writeFile(testFile, entries.join('\n'));
+  });
+
+  afterAll(async () => {
+    await rm(tmpDir, { recursive: true });
+  });
+
+  it('loads plugin from file path', async () => {
+    const pluginFile = join(tmpDir, 'test-plugin.ts');
+    await writeFile(pluginFile, `
+      export default {
+        namespace: 'test.*',
+        name: 'Test Plugin',
+        styles: '.test-plugin-loaded { display: block; }',
+      };
+    `);
+
+    const result = await $`bun src/cli.ts view ${testFile} --plugin ${pluginFile}`.quiet();
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout.toString()).toContain('test-plugin-loaded');
+  });
+});
