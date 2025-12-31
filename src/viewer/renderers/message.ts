@@ -10,13 +10,13 @@ import { escapeHtml, formatTimestamp, truncate } from '../utils.js';
 function getBadgeClass(role: Message['role']): string {
   switch (role) {
     case 'user':
-      return 'alf-badge-user';
+      return 'aef-badge-user';
     case 'assistant':
-      return 'alf-badge-assistant';
+      return 'aef-badge-assistant';
     case 'system':
-      return 'alf-badge-system';
+      return 'aef-badge-system';
     default:
-      return 'alf-badge-system';
+      return 'aef-badge-system';
   }
 }
 
@@ -24,7 +24,7 @@ function getBadgeClass(role: Message['role']): string {
  * Get the message container class for a role
  */
 function getMessageClass(role: Message['role']): string {
-  return `alf-message-${role}`;
+  return `aef-message-${role}`;
 }
 
 /**
@@ -35,12 +35,12 @@ function renderContentBlocks(blocks: ContentBlock[]): string {
     .map((block) => {
       switch (block.type) {
         case 'text':
-          return `<div class="alf-content">${escapeHtml(block.text)}</div>`;
+          return `<div class="aef-content">${escapeHtml(block.text)}</div>`;
         case 'tool_use':
-          return `<div class="alf-tool-use"><span class="alf-tool-name">${escapeHtml(block.name)}</span><pre class="alf-code">${escapeHtml(JSON.stringify(block.input, null, 2))}</pre></div>`;
+          return `<div class="aef-tool-use"><span class="aef-tool-name">${escapeHtml(block.name)}</span><pre class="aef-code">${escapeHtml(JSON.stringify(block.input, null, 2))}</pre></div>`;
         case 'tool_result':
-          const errorClass = block.is_error ? ' alf-failure' : '';
-          return `<div class="alf-tool-result-block${errorClass}"><pre class="alf-code">${escapeHtml(block.content)}</pre></div>`;
+          const errorClass = block.is_error ? ' aef-failure' : '';
+          return `<div class="aef-tool-result-block${errorClass}"><pre class="aef-code">${escapeHtml(block.content)}</pre></div>`;
         default:
           return '';
       }
@@ -57,9 +57,9 @@ export function renderMessage(entry: Message, ctx: RenderContext): RenderedEntry
   const messageClass = getMessageClass(entry.role);
   const roleLabel = entry.role.charAt(0).toUpperCase() + entry.role.slice(1);
 
-  let html = `<div class="alf-entry-header">`;
-  html += `<span class="alf-badge ${badgeClass}">${roleLabel}</span>`;
-  html += `<span class="alf-timestamp">${timestamp}</span>`;
+  let html = `<div class="aef-entry-header">`;
+  html += `<span class="aef-badge ${badgeClass}">${roleLabel}</span>`;
+  html += `<span class="aef-timestamp">${timestamp}</span>`;
   html += `</div>`;
 
   // Render content based on type
@@ -67,14 +67,14 @@ export function renderMessage(entry: Message, ctx: RenderContext): RenderedEntry
     const content = ctx.options.maxContentLength
       ? truncate(entry.content, ctx.options.maxContentLength)
       : entry.content;
-    html += `<div class="alf-content">${escapeHtml(content)}</div>`;
+    html += `<div class="aef-content">${escapeHtml(content)}</div>`;
   } else if (Array.isArray(entry.content)) {
     html += renderContentBlocks(entry.content);
   }
 
   // Add token info if present
   if (entry.tokens) {
-    html += `<div class="alf-token-info">`;
+    html += `<div class="aef-token-info">`;
     if (entry.tokens.input !== undefined) {
       html += `<span>Input: ${entry.tokens.input}</span> `;
     }
@@ -91,6 +91,6 @@ export function renderMessage(entry: Message, ctx: RenderContext): RenderedEntry
     html,
     entryId: entry.id,
     type: 'message',
-    cssClasses: ['alf-message', messageClass],
+    cssClasses: ['aef-message', messageClass],
   };
 }

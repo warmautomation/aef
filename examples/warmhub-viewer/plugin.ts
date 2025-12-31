@@ -127,8 +127,8 @@ function renderBeliefQuery(entry: BeliefQueryEntry, ctx: RenderContext): Rendere
     .join('');
 
   const html = `
-    <div class="alf-entry-header">
-      <span class="alf-badge warmhub-badge-belief">belief query</span>
+    <div class="aef-entry-header">
+      <span class="aef-badge warmhub-badge-belief">belief query</span>
       <span>${formatTimestamp(entry.ts)}</span>
     </div>
     <div class="warmhub-belief-query">
@@ -164,8 +164,8 @@ function renderBeliefUpdate(entry: BeliefUpdateEntry, ctx: RenderContext): Rende
   ].join('');
 
   const html = `
-    <div class="alf-entry-header">
-      <span class="alf-badge warmhub-badge-belief">belief update</span>
+    <div class="aef-entry-header">
+      <span class="aef-badge warmhub-badge-belief">belief update</span>
       <span class="warmhub-assertion-type">${escapeHtml(assertion.type)}</span>
       <span>${formatTimestamp(entry.ts)}</span>
     </div>
@@ -186,10 +186,10 @@ function renderBeliefUpdate(entry: BeliefUpdateEntry, ctx: RenderContext): Rende
 
 function renderReactStep(entry: ReactStepEntry, ctx: RenderContext): RenderedEntry {
   const html = `
-    <div class="alf-entry-header">
-      <span class="alf-badge warmhub-badge-react">step ${entry.step}</span>
+    <div class="aef-entry-header">
+      <span class="aef-badge warmhub-badge-react">step ${entry.step}</span>
       <span class="warmhub-action">${escapeHtml(entry.action)}</span>
-      ${entry.latency_ms ? `<span class="alf-duration">${formatDuration(entry.latency_ms)}</span>` : ''}
+      ${entry.latency_ms ? `<span class="aef-duration">${formatDuration(entry.latency_ms)}</span>` : ''}
       <span>${formatTimestamp(entry.ts)}</span>
     </div>
     <div class="warmhub-react-step">
@@ -200,7 +200,7 @@ function renderReactStep(entry: ReactStepEntry, ctx: RenderContext): RenderedEnt
       ${entry.observation ? `
         <div class="warmhub-observation">
           <strong>Observation:</strong>
-          <pre class="alf-code">${escapeHtml(entry.observation)}</pre>
+          <pre class="aef-code">${escapeHtml(entry.observation)}</pre>
         </div>
       ` : ''}
       ${entry.tokens ? `
@@ -224,8 +224,8 @@ function renderReactEpisode(entry: ReactEpisodeEntry, ctx: RenderContext): Rende
   const isCorrect = metrics.em === 1;
 
   const html = `
-    <div class="alf-entry-header">
-      <span class="alf-badge ${isCorrect ? 'warmhub-badge-success' : 'warmhub-badge-failure'}">
+    <div class="aef-entry-header">
+      <span class="aef-badge ${isCorrect ? 'warmhub-badge-success' : 'warmhub-badge-failure'}">
         ${entry.status}
       </span>
       <span>EM: ${(metrics.em * 100).toFixed(0)}% | F1: ${(metrics.f1 * 100).toFixed(0)}%</span>
@@ -421,7 +421,7 @@ const warmhubStyles = `
 
 .warmhub-query-text {
   font-style: italic;
-  color: var(--alf-muted);
+  color: var(--aef-muted);
   margin-bottom: 8px;
 }
 
@@ -444,9 +444,9 @@ const warmhubStyles = `
 
 .warmhub-hypothesis {
   padding: 10px;
-  border: 1px solid var(--alf-border);
+  border: 1px solid var(--aef-border);
   border-radius: 6px;
-  background: var(--alf-bg);
+  background: var(--aef-bg);
 }
 
 .warmhub-hypothesis-leading {
@@ -468,7 +468,7 @@ const warmhubStyles = `
 
 .warmhub-hypothesis-desc {
   font-size: 13px;
-  color: var(--alf-muted);
+  color: var(--aef-muted);
   margin-bottom: 8px;
 }
 
@@ -525,7 +525,7 @@ const warmhubStyles = `
 
 .warmhub-assertion-content {
   font-size: 13px;
-  color: var(--alf-muted);
+  color: var(--aef-muted);
   margin-bottom: 8px;
 }
 
@@ -552,7 +552,7 @@ const warmhubStyles = `
 
 .warmhub-thought {
   padding: 8px 12px;
-  background: var(--alf-code-bg);
+  background: var(--aef-code-bg);
   border-radius: 4px;
   margin-bottom: 8px;
   font-style: italic;
@@ -568,7 +568,7 @@ const warmhubStyles = `
 
 .warmhub-tokens {
   font-size: 12px;
-  color: var(--alf-muted);
+  color: var(--aef-muted);
   margin-top: 8px;
 }
 
@@ -594,7 +594,7 @@ const warmhubStyles = `
   flex: 1;
   padding: 8px 12px;
   border-radius: 4px;
-  background: var(--alf-code-bg);
+  background: var(--aef-code-bg);
 }
 
 .warmhub-correct { border-left: 3px solid #22c55e; }
@@ -609,7 +609,7 @@ const warmhubStyles = `
 .warmhub-metric {
   text-align: center;
   padding: 12px;
-  background: var(--alf-code-bg);
+  background: var(--aef-code-bg);
   border-radius: 6px;
 }
 
@@ -620,7 +620,7 @@ const warmhubStyles = `
 
 .warmhub-metric-label {
   font-size: 11px;
-  color: var(--alf-muted);
+  color: var(--aef-muted);
   text-transform: uppercase;
 }
 
@@ -637,8 +637,8 @@ const warmhubStyles = `
 /* Belief Trajectory */
 .warmhub-belief-trajectory {
   padding: 16px;
-  background: var(--alf-assistant-bg);
-  border: 1px solid var(--alf-border);
+  background: var(--aef-assistant-bg);
+  border: 1px solid var(--aef-border);
   border-radius: 8px;
   margin-bottom: 16px;
 }
@@ -699,8 +699,8 @@ const warmhubStyles = `
 /* Tool Waterfall */
 .warmhub-tool-waterfall {
   padding: 16px;
-  background: var(--alf-assistant-bg);
-  border: 1px solid var(--alf-border);
+  background: var(--aef-assistant-bg);
+  border: 1px solid var(--aef-border);
   border-radius: 8px;
   margin-bottom: 16px;
 }
@@ -709,12 +709,12 @@ const warmhubStyles = `
   display: flex;
   gap: 16px;
   font-size: 12px;
-  color: var(--alf-muted);
+  color: var(--aef-muted);
   margin-top: 8px;
 }
 
 .warmhub-no-data {
-  color: var(--alf-muted);
+  color: var(--aef-muted);
   font-style: italic;
   text-align: center;
   padding: 24px;

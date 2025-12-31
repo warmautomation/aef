@@ -42,5 +42,5 @@ export function truncate(str: string, maxLen: number): string {
  * Generate a CSS class name from entry type
  */
 export function typeToClass(type: string): string {
-  return `alf-${type.replace(/\./g, '-')}`;
+  return `aef-${type.replace(/\./g, '-')}`;
 }

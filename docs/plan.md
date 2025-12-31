@@ -1,8 +1,8 @@
-# ALF (Agent Log Format) Implementation Plan
+# AEF (Agent Event Format) Implementation Plan
 
 ## Overview
 
-Implement a normalized log format specification (ALF v0.1) to enable cross-framework visualization and analysis for AI coding agents. ALF aims to become the common interchange format that enables unified tooling across the fragmented agent ecosystem.
+Implement a normalized log format specification (AEF v0.1) to enable cross-framework visualization and analysis for AI coding agents. AEF aims to become the common interchange format that enables unified tooling across the fragmented agent ecosystem.
 
 ## Strategic Principles
 
@@ -35,9 +35,9 @@ JSONL append-only format enables:
 Adapter interfaces must support streaming from day one, even if v0.1 implementations are batch-oriented.
 
 ### 4. OpenTelemetry as Cousin
-ALF and OTel serve different purposes but should interoperate cleanly.
+AEF and OTel serve different purposes but should interoperate cleanly.
 
-| ALF Concept | OTel Equivalent |
+| AEF Concept | OTel Equivalent |
 |-------------|-----------------|
 | `sid` (session) | Trace ID |
 | `id` (entry) | Span ID |
@@ -53,10 +53,10 @@ Future work: `alf export --format otlp` for OTel collector ingestion.
 ## Repository Structure
 
 ```
-alf/
+aef/
 ├── docs/
 │   ├── plan.md                 # This file
-│   ├── ALF-spec-v0.1.md        # Standalone specification
+│   ├── AEF-spec-v0.1.md        # Standalone specification
 │   ├── extensions.md           # Extension schemas (warmhub, etc.)
 │   └── otel-mapping.md         # OTel interoperability guide
 ├── src/
@@ -106,7 +106,7 @@ alf/
 
 After implementing this plan:
 
-1. **Standalone ALF specification** exists at `docs/ALF-spec-v0.1.md`
+1. **Standalone AEF specification** exists at `docs/AEF-spec-v0.1.md`
 2. **Extension documentation** exists at `docs/extensions.md` with warmhub schemas as examples
 3. **JSON Schema** validates core types; extensions validate by namespace pattern
 4. **Adapters** for Claude Code, Codex CLI, Gemini CLI, ReActPOC
@@ -119,24 +119,24 @@ After implementing this plan:
 # Install dependencies
 bun install
 
-# Validate a log file against ALF schema
-bun alf validate /path/to/logs/*.jsonl
+# Validate a log file against AEF schema
+bun aef validate /path/to/logs/*.jsonl
 
-# Convert Claude Code log to ALF
-bun alf convert --adapter claude-code ~/.claude/projects/<project>/*.jsonl
+# Convert Claude Code log to AEF
+bun aef convert --adapter claude-code ~/.claude/projects/<project>/*.jsonl
 
 # Convert with streaming (future)
-tail -f session.jsonl | bun alf convert --adapter claude-code --streaming
+tail -f session.jsonl | bun aef convert --adapter claude-code --streaming
 
 # Inspect log metadata
-bun alf info /path/to/log.jsonl
+bun aef info /path/to/log.jsonl
 ```
 
 ---
 
 ## What We're NOT Doing (v0.1)
 
-- Not modifying existing trace writers to emit ALF natively
+- Not modifying existing trace writers to emit AEF natively
 - Not building a unified viewer (consumers import this package)
 - Not building OTel exporters (mapping documented for future work)
 - Not requiring adapters to support streaming (interface allows it, implementation is batch)
@@ -151,14 +151,14 @@ Create a standalone, version-controlled specification that can be shared indepen
 
 ### Deliverables
 
-**File**: `docs/ALF-spec-v0.1.md`
+**File**: `docs/AEF-spec-v0.1.md`
 
 ```markdown
-# Agent Log Format (ALF) Specification v0.1
+# Agent Event Format (AEF) Specification v0.1
 
 ## Abstract
 
-ALF is a normalized log format for AI agent traces. It enables cross-framework
+AEF is a normalized log format for AI agent traces. It enables cross-framework
 visualization and analysis by providing a common schema for session, message,
 tool, and extension events.
 
@@ -170,7 +170,7 @@ Draft - v0.1
 
 ### 1.1 Purpose
 
-ALF provides a common interchange format for AI agent logs, enabling:
+AEF provides a common interchange format for AI agent logs, enabling:
 - Unified visualization across different agent frameworks
 - Cross-agent analysis and comparison
 - Tool-agnostic log processing
@@ -188,7 +188,7 @@ ALF provides a common interchange format for AI agent logs, enabling:
 
 ### 2.1 Base Entry
 
-Every ALF entry MUST contain these fields:
+Every AEF entry MUST contain these fields:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -218,7 +218,7 @@ Every ALF entry MUST contain these fields:
 Extensions use dotted namespaces: `<vendor>.<category>.<type>`
 
 Reserved vendor prefixes:
-- `alf.*` - Official ALF extensions
+- `alf.*` - Official AEF extensions
 - `otel.*` - OpenTelemetry compatibility
 
 Examples:
@@ -242,12 +242,12 @@ through when schema is unknown.
 
 **Naming Convention** (recommended):
 ```
-<agent>_<session-id>_<timestamp>.alf.jsonl
+<agent>_<session-id>_<timestamp>.aef.jsonl
 ```
 
 ## 5. OpenTelemetry Mapping
 
-See Appendix B for detailed mapping between ALF and OTel concepts.
+See Appendix B for detailed mapping between AEF and OTel concepts.
 
 ## Appendix A: JSON Schema
 
@@ -264,7 +264,7 @@ See Appendix B for detailed mapping between ALF and OTel concepts.
 
 ### Success Criteria
 
-- [ ] File exists at `docs/ALF-spec-v0.1.md`
+- [ ] File exists at `docs/AEF-spec-v0.1.md`
 - [ ] Specification is self-contained and readable
 - [ ] All core entry types are fully defined
 - [ ] Extension namespace convention is clear
@@ -286,9 +286,9 @@ Create JSON Schema and TypeScript types for **core types only**. Extensions are 
 
 ```typescript
 /**
- * ALF Core Type Definitions
+ * AEF Core Type Definitions
  *
- * Extensions are NOT defined here - they use the base ALFEntry interface
+ * Extensions are NOT defined here - they use the base AEFEntry interface
  * and are validated by namespace pattern matching.
  */
 
@@ -297,9 +297,9 @@ Create JSON Schema and TypeScript types for **core types only**. Extensions are 
 // =============================================================================
 
 /**
- * Base ALF entry - all entries must have these fields
+ * Base AEF entry - all entries must have these fields
  */
-export interface ALFEntry {
+export interface AEFEntry {
   /** Schema version */
   v: 1;
   /** Entry ID (UUIDv7 or ULID recommended) */
@@ -319,7 +319,7 @@ export interface ALFEntry {
 /**
  * Session start entry
  */
-export interface SessionStart extends ALFEntry {
+export interface SessionStart extends AEFEntry {
   type: 'session.start';
   agent: string;
   version?: string;
@@ -331,7 +331,7 @@ export interface SessionStart extends ALFEntry {
 /**
  * Session end entry
  */
-export interface SessionEnd extends ALFEntry {
+export interface SessionEnd extends AEFEntry {
   type: 'session.end';
   status: 'complete' | 'error' | 'timeout' | 'user_abort';
   summary?: {
@@ -345,7 +345,7 @@ export interface SessionEnd extends ALFEntry {
 /**
  * Message entry (user, assistant, or system)
  */
-export interface Message extends ALFEntry {
+export interface Message extends AEFEntry {
   type: 'message';
   role: 'user' | 'assistant' | 'system';
   content: string | ContentBlock[];
@@ -363,7 +363,7 @@ export type ContentBlock =
 /**
  * Tool call entry
  */
-export interface ToolCall extends ALFEntry {
+export interface ToolCall extends AEFEntry {
   type: 'tool.call';
   tool: string;
   args: Record<string, unknown>;
@@ -373,7 +373,7 @@ export interface ToolCall extends ALFEntry {
 /**
  * Tool result entry
  */
-export interface ToolResult extends ALFEntry {
+export interface ToolResult extends AEFEntry {
   type: 'tool.result';
   tool: string;
   call_id?: string;
@@ -386,7 +386,7 @@ export interface ToolResult extends ALFEntry {
 /**
  * Error entry
  */
-export interface ErrorEntry extends ALFEntry {
+export interface ErrorEntry extends AEFEntry {
   type: 'error';
   code?: string;
   message: string;
@@ -408,7 +408,7 @@ export type CoreEntry =
 /**
  * Type guard for core entry types
  */
-export function isCoreEntry(entry: ALFEntry): entry is CoreEntry {
+export function isCoreEntry(entry: AEFEntry): entry is CoreEntry {
   return [
     'session.start',
     'session.end',
@@ -422,7 +422,7 @@ export function isCoreEntry(entry: ALFEntry): entry is CoreEntry {
 /**
  * Type guard for extension entries (namespaced types)
  */
-export function isExtensionEntry(entry: ALFEntry): boolean {
+export function isExtensionEntry(entry: AEFEntry): boolean {
   return entry.type.includes('.') && !isCoreEntry(entry);
 }
 ```
@@ -442,7 +442,7 @@ Schema validates:
 
 ```typescript
 import Ajv from 'ajv';
-import type { ALFEntry, CoreEntry } from './types.js';
+import type { AEFEntry, CoreEntry } from './types.js';
 
 export interface ValidationResult {
   valid: boolean;
@@ -450,14 +450,14 @@ export interface ValidationResult {
   entryType: 'core' | 'extension' | 'invalid';
 }
 
-export function validateALFEntry(entry: unknown): ValidationResult {
+export function validateAEFEntry(entry: unknown): ValidationResult {
   // 1. Validate base fields
   // 2. If core type, validate type-specific schema
   // 3. If extension (namespaced), validate base fields only
   // 4. Return result with entry classification
 }
 
-export async function* validateALFStream(
+export async function* validateAEFStream(
   lines: AsyncIterable<string>
 ): AsyncGenerator<{ line: number; result: ValidationResult }> {
   // Streaming validation for large files
@@ -478,7 +478,7 @@ export async function* validateALFStream(
 
 ### Overview
 
-Transform Claude Code session logs into ALF format. This is the highest-value adapter due to Claude Code's popularity.
+Transform Claude Code session logs into AEF format. This is the highest-value adapter due to Claude Code's popularity.
 
 ### Deliverables
 
@@ -487,7 +487,7 @@ Transform Claude Code session logs into ALF format. This is the highest-value ad
 **File**: `src/adapters/adapter.ts`
 
 ```typescript
-import type { ALFEntry } from '../types.js';
+import type { AEFEntry } from '../types.js';
 
 export interface AdapterOptions {
   /** Generate sequential IDs instead of random */
@@ -503,14 +503,14 @@ export interface LogAdapter<TSource = unknown> {
   /** File patterns this adapter handles */
   readonly patterns: string[];
 
-  /** Parse source into ALF entries (batch) */
-  parse(source: TSource, options?: AdapterOptions): AsyncIterable<ALFEntry>;
+  /** Parse source into AEF entries (batch) */
+  parse(source: TSource, options?: AdapterOptions): AsyncIterable<AEFEntry>;
 
   /** Parse streaming input (optional, for streamable-first) */
   parseStream?(
     stream: AsyncIterable<string>,
     options?: AdapterOptions
-  ): AsyncIterable<ALFEntry>;
+  ): AsyncIterable<AEFEntry>;
 }
 
 export function generateId(): string {
@@ -538,7 +538,7 @@ Transforms Claude Code logs:
 - [ ] Transforms real Claude Code logs correctly
 - [ ] Session boundaries detected properly
 - [ ] Tool calls extracted from content blocks
-- [ ] Output validates against ALF schema
+- [ ] Output validates against AEF schema
 
 ---
 
@@ -546,7 +546,7 @@ Transforms Claude Code logs:
 
 ### Overview
 
-Transform Codex CLI logs into ALF format. Validates cross-vendor story.
+Transform Codex CLI logs into AEF format. Validates cross-vendor story.
 
 ### Research Required
 
@@ -563,7 +563,7 @@ Transform Codex CLI logs into ALF format. Validates cross-vendor story.
 - [ ] Format documented
 - [ ] Adapter compiles
 - [ ] Transforms Codex logs correctly
-- [ ] Output validates against ALF schema
+- [ ] Output validates against AEF schema
 
 ---
 
@@ -585,19 +585,19 @@ const program = new Command();
 
 program
   .name('alf')
-  .description('Agent Log Format utilities')
+  .description('Agent Event Format utilities')
   .version('0.1.0');
 
 program
   .command('validate <file...>')
-  .description('Validate ALF JSONL file(s)')
+  .description('Validate AEF JSONL file(s)')
   .option('--strict', 'Fail on extension entries without schema')
   .option('--quiet', 'Only output errors')
   .action(async (files, options) => { /* ... */ });
 
 program
   .command('convert <file>')
-  .description('Convert a log file to ALF format')
+  .description('Convert a log file to AEF format')
   .requiredOption('-a, --adapter <name>', 'Adapter (claude-code, codex, gemini, reactpoc)')
   .option('-o, --output <file>', 'Output file (default: stdout)')
   .option('--validate', 'Validate output entries')
@@ -620,10 +620,10 @@ program.parse();
 
 ### Success Criteria
 
-- [ ] `bun alf validate` works with helpful output
-- [ ] `bun alf convert --adapter claude-code` works
-- [ ] `bun alf info` shows useful metadata
-- [ ] `bun alf adapters` lists available adapters
+- [ ] `bun aef validate` works with helpful output
+- [ ] `bun aef convert --adapter claude-code` works
+- [ ] `bun aef info` shows useful metadata
+- [ ] `bun aef adapters` lists available adapters
 - [ ] Exit codes are correct (0 success, 1 error)
 
 ---
@@ -632,7 +632,7 @@ program.parse();
 
 ### Overview
 
-Transform Gemini CLI logs into ALF format.
+Transform Gemini CLI logs into AEF format.
 
 ### Research Required
 
@@ -659,7 +659,7 @@ Transform ReActPOC traces and use them to validate the extension model.
 **File**: `docs/extensions.md`
 
 ```markdown
-# ALF Extension Schemas
+# AEF Extension Schemas
 
 This document defines extension schemas for domain-specific agent concepts.
 Extensions serve as examples for implementing custom schemas.
@@ -704,7 +704,7 @@ ReAct agent step tracking.
 
 **File**: `src/adapters/reactpoc.ts`
 
-Transforms episode-centric format to event-centric ALF:
+Transforms episode-centric format to event-centric AEF:
 - Episode → `session.start` + messages + steps + `session.end`
 - Steps → `warmhub.react.step` + `tool.call` + `tool.result`
 - Belief entries → `warmhub.belief.query` / `warmhub.belief.update`
@@ -785,9 +785,9 @@ bun test --test-name-pattern "extension"
 ```typescript
 // src/__tests__/validator.test.ts
 import { describe, it, expect } from 'bun:test';
-import { validateALFEntry } from '../validator';
+import { validateAEFEntry } from '../validator';
 
-describe('validateALFEntry', () => {
+describe('validateAEFEntry', () => {
   it('validates a valid session.start entry', () => {
     const entry = {
       v: 1,
@@ -797,14 +797,14 @@ describe('validateALFEntry', () => {
       sid: 'session-abc123',
       agent: 'claude-code',
     };
-    const result = validateALFEntry(entry);
+    const result = validateAEFEntry(entry);
     expect(result.valid).toBe(true);
     expect(result.entryType).toBe('core');
   });
 
   it('rejects entry missing required fields', () => {
     const entry = { v: 1, type: 'message' };
-    const result = validateALFEntry(entry);
+    const result = validateAEFEntry(entry);
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('/id: Required');
   });
@@ -818,7 +818,7 @@ describe('validateALFEntry', () => {
       sid: 'session-abc123',
       customField: 'allowed',
     };
-    const result = validateALFEntry(entry);
+    const result = validateAEFEntry(entry);
     expect(result.valid).toBe(true);
     expect(result.entryType).toBe('extension');
   });
@@ -839,7 +839,7 @@ import { describe, it, expect } from 'bun:test';
 import { $ } from 'bun';
 
 describe('alf cli', () => {
-  it('validates a valid ALF file', async () => {
+  it('validates a valid AEF file', async () => {
     const result = await $`bun src/cli.ts validate fixtures/alf/valid-core.jsonl`.quiet();
     expect(result.exitCode).toBe(0);
   });
@@ -902,7 +902,7 @@ bun test --coverage
 - Span context propagation
 
 ### Tooling
-- VS Code extension for ALF viewing
+- VS Code extension for AEF viewing
 - Web-based trace viewer
 - Real-time streaming adapter implementations
 

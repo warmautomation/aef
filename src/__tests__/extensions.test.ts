@@ -303,12 +303,12 @@ describe('Extension validation', () => {
   });
 
   describe('reserved namespace handling', () => {
-    it('allows alf.* extensions', () => {
+    it('allows aef.* extensions', () => {
       const entry = {
         v: 1,
         id: 'test-id',
         ts: 1704067200000,
-        type: 'alf.future.feature',
+        type: 'aef.future.feature',
         sid: 'session-123',
         data: { enabled: true },
       };

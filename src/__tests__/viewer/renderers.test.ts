@@ -59,8 +59,8 @@ describe('renderMessage', () => {
     };
     const result = renderMessage(entry, baseCtx);
     expect(result.html).toContain('Hello, world!');
-    expect(result.html).toContain('alf-badge-user');
-    expect(result.cssClasses).toContain('alf-message-user');
+    expect(result.html).toContain('aef-badge-user');
+    expect(result.cssClasses).toContain('aef-message-user');
   });
 
   it('renders assistant message', () => {
@@ -70,7 +70,7 @@ describe('renderMessage', () => {
     };
     const result = renderMessage(entry, baseCtx);
     expect(result.html).toContain('I can help with that.');
-    expect(result.html).toContain('alf-badge-assistant');
+    expect(result.html).toContain('aef-badge-assistant');
   });
 
   it('renders system message', () => {
@@ -80,7 +80,7 @@ describe('renderMessage', () => {
     };
     const result = renderMessage(entry, baseCtx);
     expect(result.html).toContain('You are a helpful assistant.');
-    expect(result.html).toContain('alf-badge-system');
+    expect(result.html).toContain('aef-badge-system');
   });
 
   it('escapes HTML in content', () => {
@@ -127,7 +127,7 @@ describe('renderToolResult', () => {
     const result = renderToolResult(entry, baseCtx);
     expect(result.html).toContain('file1.txt');
     expect(result.html).toContain('50ms');
-    expect(result.html).toContain('alf-success');
+    expect(result.html).toContain('aef-success');
   });
 
   it('renders failed tool result with error', () => {
@@ -138,7 +138,7 @@ describe('renderToolResult', () => {
     };
     const result = renderToolResult(entry, baseCtx);
     expect(result.html).toContain('File not found');
-    expect(result.html).toContain('alf-failure');
+    expect(result.html).toContain('aef-failure');
   });
 
   it('renders tool result without duration', () => {

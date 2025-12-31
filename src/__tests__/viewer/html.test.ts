@@ -29,7 +29,7 @@ describe('generateHtml', () => {
   it('includes CSS styles', () => {
     const html = generateHtml(entries);
     expect(html).toContain('<style>');
-    expect(html).toContain('.alf-entry');
+    expect(html).toContain('.aef-entry');
   });
 
   it('renders all entries', () => {
@@ -46,7 +46,7 @@ describe('generateHtml', () => {
 
   it('includes collapsible JS when enabled', () => {
     const html = generateHtml(entries, { collapsedTools: true });
-    expect(html).toContain('alf-collapsible');
+    expect(html).toContain('aef-collapsible');
   });
 });
 

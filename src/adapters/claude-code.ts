@@ -153,11 +153,11 @@ export const claudeCodeAdapter: LogAdapter<AsyncIterable<string>> = {
       const parentId = entry.parentUuid ?? lastEntryId;
 
       // Convert content to AEF format
-      let alfContent: string | ContentBlock[];
+      let aefContent: string | ContentBlock[];
       if (typeof content === 'string') {
-        alfContent = content;
+        aefContent = content;
       } else {
-        alfContent = content.map((block): ContentBlock => {
+        aefContent = content.map((block): ContentBlock => {
           if (block.type === 'text') {
             return { type: 'text', text: block.text ?? '' };
           } else if (block.type === 'tool_use') {
@@ -188,7 +188,7 @@ export const claudeCodeAdapter: LogAdapter<AsyncIterable<string>> = {
         pid: parentId,
         seq: seq++,
         role,
-        content: alfContent,
+        content: aefContent,
         model: entry.message.model,
         tokens: entry.message.usage
           ? {

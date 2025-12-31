@@ -5,12 +5,12 @@ import { mkdtemp, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
-describe('alf view command', () => {
+describe('aef view command', () => {
   let tmpDir: string;
   let testFile: string;
 
   beforeAll(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'alf-test-'));
+    tmpDir = await mkdtemp(join(tmpdir(), 'aef-test-'));
     testFile = join(tmpDir, 'test.jsonl');
 
     const entries = [
@@ -49,12 +49,12 @@ describe('alf view command', () => {
   });
 });
 
-describe('alf view with plugins', () => {
+describe('aef view with plugins', () => {
   let tmpDir: string;
   let testFile: string;
 
   beforeAll(async () => {
-    tmpDir = await mkdtemp(join(tmpdir(), 'alf-test-'));
+    tmpDir = await mkdtemp(join(tmpdir(), 'aef-test-'));
     testFile = join(tmpDir, 'test.jsonl');
 
     const entries = [

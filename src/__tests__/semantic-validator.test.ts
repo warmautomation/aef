@@ -5,35 +5,35 @@ import { loadFixture } from './helpers.js';
 describe('semantic validation', () => {
   describe('valid fixtures', () => {
     it('accepts minimal-session', async () => {
-      const entries = await loadFixture('valid/minimal-session.alf.jsonl');
+      const entries = await loadFixture('valid/minimal-session.aef.jsonl');
       const result = validateSemantics(entries);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     it('accepts tool-flow', async () => {
-      const entries = await loadFixture('valid/tool-flow.alf.jsonl');
+      const entries = await loadFixture('valid/tool-flow.aef.jsonl');
       const result = validateSemantics(entries);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     it('accepts multi-tool-session', async () => {
-      const entries = await loadFixture('valid/multi-tool-session.alf.jsonl');
+      const entries = await loadFixture('valid/multi-tool-session.aef.jsonl');
       const result = validateSemantics(entries);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     it('accepts parallel-tools', async () => {
-      const entries = await loadFixture('valid/parallel-tools.alf.jsonl');
+      const entries = await loadFixture('valid/parallel-tools.aef.jsonl');
       const result = validateSemantics(entries);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     it('accepts with-extensions', async () => {
-      const entries = await loadFixture('valid/with-extensions.alf.jsonl');
+      const entries = await loadFixture('valid/with-extensions.aef.jsonl');
       const result = validateSemantics(entries);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -49,7 +49,7 @@ describe('semantic validation', () => {
   describe('MUST violations', () => {
     describe('session-start-first (§4.1)', () => {
       it('rejects session.start not at beginning', async () => {
-        const entries = await loadFixture('invalid/session-start-not-first.alf.jsonl');
+        const entries = await loadFixture('invalid/session-start-not-first.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'session-start-first')).toBe(true);
@@ -60,7 +60,7 @@ describe('semantic validation', () => {
 
     describe('session-end-last (§4.2)', () => {
       it('rejects session.end not at end', async () => {
-        const entries = await loadFixture('invalid/session-end-not-last.alf.jsonl');
+        const entries = await loadFixture('invalid/session-end-not-last.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'session-end-last')).toBe(true);
@@ -71,7 +71,7 @@ describe('semantic validation', () => {
 
     describe('session-contiguous (§3.1.4)', () => {
       it('rejects interleaved sessions', async () => {
-        const entries = await loadFixture('invalid/interleaved-sessions.alf.jsonl');
+        const entries = await loadFixture('invalid/interleaved-sessions.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'session-contiguous')).toBe(true);
@@ -82,7 +82,7 @@ describe('semantic validation', () => {
 
     describe('seq-monotonic (§3.2)', () => {
       it('rejects decreasing seq values', async () => {
-        const entries = await loadFixture('invalid/decreasing-seq.alf.jsonl');
+        const entries = await loadFixture('invalid/decreasing-seq.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'seq-monotonic')).toBe(true);
@@ -103,7 +103,7 @@ describe('semantic validation', () => {
 
     describe('call-id-match (§4.4/§4.5)', () => {
       it('rejects mismatched call_ids', async () => {
-        const entries = await loadFixture('invalid/mismatched-call-ids.alf.jsonl');
+        const entries = await loadFixture('invalid/mismatched-call-ids.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'call-id-match')).toBe(true);
@@ -126,7 +126,7 @@ describe('semantic validation', () => {
 
     describe('error-required (§4.5)', () => {
       it('rejects success=false without error', async () => {
-        const entries = await loadFixture('invalid/missing-error-on-failure.alf.jsonl');
+        const entries = await loadFixture('invalid/missing-error-on-failure.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'error-required')).toBe(true);
@@ -156,7 +156,7 @@ describe('semantic validation', () => {
 
     describe('pid-exists (§6.2)', () => {
       it('rejects pid pointing to future entry', async () => {
-        const entries = await loadFixture('invalid/pid-future-ref.alf.jsonl');
+        const entries = await loadFixture('invalid/pid-future-ref.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'pid-exists')).toBe(true);
@@ -292,20 +292,20 @@ describe('semantic validation', () => {
 
   describe('error message quality', () => {
     it('includes rule ID in error', async () => {
-      const entries = await loadFixture('invalid/session-start-not-first.alf.jsonl');
+      const entries = await loadFixture('invalid/session-start-not-first.aef.jsonl');
       const result = validateSemantics(entries);
       expect(result.errors[0].rule).toBeDefined();
       expect(result.errors[0].rule.length).toBeGreaterThan(0);
     });
 
     it('includes spec reference in error', async () => {
-      const entries = await loadFixture('invalid/session-start-not-first.alf.jsonl');
+      const entries = await loadFixture('invalid/session-start-not-first.aef.jsonl');
       const result = validateSemantics(entries);
       expect(result.errors[0].specRef).toMatch(/^§/);
     });
 
     it('includes affected entry IDs', async () => {
-      const entries = await loadFixture('invalid/session-start-not-first.alf.jsonl');
+      const entries = await loadFixture('invalid/session-start-not-first.aef.jsonl');
       const result = validateSemantics(entries);
       expect(result.errors[0].entryIds).toBeDefined();
       expect(result.errors[0].entryIds.length).toBeGreaterThan(0);

@@ -102,7 +102,7 @@ export function generateSparkline(
         .join('')
     : '';
 
-  return `<svg width="${width}" height="${height}" class="alf-sparkline ${cssClass ?? ''}" viewBox="0 0 ${width} ${height}">
+  return `<svg width="${width}" height="${height}" class="aef-sparkline ${cssClass ?? ''}" viewBox="0 0 ${width} ${height}">
   ${filled ? `<path d="${fillPath}" fill="${fillColor}" stroke="none" />` : ''}
   <path d="${pathData}" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" />
   ${dots}
@@ -144,7 +144,7 @@ export function generateMultiSparkline(
     return `<path d="${pathData}" fill="none" stroke="${s.color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" />`;
   });
 
-  return `<svg width="${width}" height="${height}" class="alf-sparkline alf-sparkline-multi ${cssClass ?? ''}" viewBox="0 0 ${width} ${height}">
+  return `<svg width="${width}" height="${height}" class="aef-sparkline aef-sparkline-multi ${cssClass ?? ''}" viewBox="0 0 ${width} ${height}">
   ${paths.join('\n  ')}
 </svg>`;
 }
@@ -185,7 +185,7 @@ export function generateBarSparkline(
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${barHeight.toFixed(1)}" fill="${color}" />`;
   });
 
-  return `<svg width="${width}" height="${height}" class="alf-sparkline alf-sparkline-bar ${cssClass ?? ''}" viewBox="0 0 ${width} ${height}">
+  return `<svg width="${width}" height="${height}" class="aef-sparkline aef-sparkline-bar ${cssClass ?? ''}" viewBox="0 0 ${width} ${height}">
   ${bars.join('\n  ')}
 </svg>`;
 }

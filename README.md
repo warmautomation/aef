@@ -1,18 +1,18 @@
-# AEF - Agent Log Format
+# AEF - Agent Event Format
 
-Normalized log format for AI coding agents (Claude Code, Codex, Gemini, ReAct agents, etc.).
+Vendor-neutral event schema for AI agent execution (Claude Code, Codex, Gemini, ReAct agents, etc.).
 
 ## Overview
 
-AEF provides a common interchange format for AI agent logs, enabling:
+AEF provides a common interchange format for AI agent events, enabling:
 - Unified visualization across different agent frameworks
 - Cross-agent analysis and comparison
-- Tool-agnostic log processing
+- Tool-agnostic event processing
 
 ## Installation
 
 ```bash
-bun add @warmautomation/alf
+bun add @warmautomation/aef
 ```
 
 ## Usage
@@ -21,19 +21,19 @@ bun add @warmautomation/alf
 
 ```bash
 # Validate an AEF file
-bun alf validate logs/traces.jsonl
+bun aef validate logs/traces.jsonl
 
 # Convert ReActPOC traces to AEF
-bun alf convert --adapter reactpoc logs/belief_*.jsonl -o output.jsonl
+bun aef convert --adapter reactpoc logs/belief_*.jsonl -o output.jsonl
 
 # Convert Claude Code logs to AEF
-bun alf convert --adapter claude-code ~/.claude/projects/*/*.jsonl -o output.jsonl
+bun aef convert --adapter claude-code ~/.claude/projects/*/*.jsonl -o output.jsonl
 ```
 
 ### Library
 
 ```typescript
-import { validateAEFEntry, reactpocAdapter, claudeCodeAdapter } from '@warmautomation/alf';
+import { validateAEFEntry, reactpocAdapter, claudeCodeAdapter } from '@warmautomation/aef';
 
 // Validate an entry
 const result = validateAEFEntry(entry);
@@ -41,9 +41,9 @@ if (!result.valid) {
   console.error(result.errors);
 }
 
-// Transform logs
-for await (const alfEntry of reactpocAdapter.parse(lines)) {
-  console.log(alfEntry);
+// Transform events
+for await (const aefEntry of reactpocAdapter.parse(lines)) {
+  console.log(aefEntry);
 }
 ```
 
@@ -82,7 +82,7 @@ bun test
 bun typecheck
 
 # Run CLI in dev mode
-bun alf validate <file>
+bun aef validate <file>
 ```
 
 ## License

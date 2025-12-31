@@ -3,35 +3,35 @@
 export type Theme = 'light' | 'dark';
 
 const LIGHT_THEME = {
-  '--alf-bg': '#ffffff',
-  '--alf-fg': '#1a1a1a',
-  '--alf-border': '#e0e0e0',
-  '--alf-muted': '#666666',
-  '--alf-accent': '#0066cc',
-  '--alf-success': '#22863a',
-  '--alf-error': '#cb2431',
-  '--alf-warning': '#b08800',
-  '--alf-user-bg': '#f0f7ff',
-  '--alf-assistant-bg': '#f6f8fa',
-  '--alf-tool-bg': '#fffbeb',
-  '--alf-error-bg': '#ffeef0',
-  '--alf-code-bg': '#f6f8fa',
+  '--aef-bg': '#ffffff',
+  '--aef-fg': '#1a1a1a',
+  '--aef-border': '#e0e0e0',
+  '--aef-muted': '#666666',
+  '--aef-accent': '#0066cc',
+  '--aef-success': '#22863a',
+  '--aef-error': '#cb2431',
+  '--aef-warning': '#b08800',
+  '--aef-user-bg': '#f0f7ff',
+  '--aef-assistant-bg': '#f6f8fa',
+  '--aef-tool-bg': '#fffbeb',
+  '--aef-error-bg': '#ffeef0',
+  '--aef-code-bg': '#f6f8fa',
 };
 
 const DARK_THEME = {
-  '--alf-bg': '#1e1e1e',
-  '--alf-fg': '#e0e0e0',
-  '--alf-border': '#404040',
-  '--alf-muted': '#999999',
-  '--alf-accent': '#58a6ff',
-  '--alf-success': '#3fb950',
-  '--alf-error': '#f85149',
-  '--alf-warning': '#d29922',
-  '--alf-user-bg': '#1c2d3d',
-  '--alf-assistant-bg': '#2d2d2d',
-  '--alf-tool-bg': '#3d3520',
-  '--alf-error-bg': '#3d1f22',
-  '--alf-code-bg': '#2d2d2d',
+  '--aef-bg': '#1e1e1e',
+  '--aef-fg': '#e0e0e0',
+  '--aef-border': '#404040',
+  '--aef-muted': '#999999',
+  '--aef-accent': '#58a6ff',
+  '--aef-success': '#3fb950',
+  '--aef-error': '#f85149',
+  '--aef-warning': '#d29922',
+  '--aef-user-bg': '#1c2d3d',
+  '--aef-assistant-bg': '#2d2d2d',
+  '--aef-tool-bg': '#3d3520',
+  '--aef-error-bg': '#3d1f22',
+  '--aef-code-bg': '#2d2d2d',
 };
 
 export function getThemeVariables(theme: Theme): Record<string, string> {
@@ -55,47 +55,47 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--alf-fg);
-  background: var(--alf-bg);
+  color: var(--aef-fg);
+  background: var(--aef-bg);
   margin: 0;
   padding: 20px;
 }
 
-.alf-container {
+.aef-container {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.alf-session-header {
+.aef-session-header {
   padding: 16px;
-  border: 1px solid var(--alf-border);
+  border: 1px solid var(--aef-border);
   border-radius: 8px;
   margin-bottom: 16px;
-  background: var(--alf-assistant-bg);
+  background: var(--aef-assistant-bg);
 }
 
-.alf-session-header h1 {
+.aef-session-header h1 {
   margin: 0 0 8px 0;
   font-size: 18px;
 }
 
-.alf-entry {
+.aef-entry {
   padding: 12px 16px;
-  border: 1px solid var(--alf-border);
+  border: 1px solid var(--aef-border);
   border-radius: 6px;
   margin-bottom: 8px;
 }
 
-.alf-entry-header {
+.aef-entry-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
   font-size: 12px;
-  color: var(--alf-muted);
+  color: var(--aef-muted);
 }
 
-.alf-badge {
+.aef-badge {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 12px;
@@ -104,57 +104,57 @@ body {
   text-transform: uppercase;
 }
 
-.alf-badge-user { background: var(--alf-accent); color: white; }
-.alf-badge-assistant { background: var(--alf-success); color: white; }
-.alf-badge-system { background: var(--alf-muted); color: white; }
-.alf-badge-tool { background: var(--alf-warning); color: white; }
-.alf-badge-error { background: var(--alf-error); color: white; }
+.aef-badge-user { background: var(--aef-accent); color: white; }
+.aef-badge-assistant { background: var(--aef-success); color: white; }
+.aef-badge-system { background: var(--aef-muted); color: white; }
+.aef-badge-tool { background: var(--aef-warning); color: white; }
+.aef-badge-error { background: var(--aef-error); color: white; }
 
-.alf-message { background: var(--alf-assistant-bg); }
-.alf-message-user { background: var(--alf-user-bg); }
-.alf-message-assistant { background: var(--alf-assistant-bg); }
+.aef-message { background: var(--aef-assistant-bg); }
+.aef-message-user { background: var(--aef-user-bg); }
+.aef-message-assistant { background: var(--aef-assistant-bg); }
 
-.alf-tool-call { background: var(--alf-tool-bg); }
-.alf-tool-result { background: var(--alf-tool-bg); }
-.alf-error { background: var(--alf-error-bg); }
+.aef-tool-call { background: var(--aef-tool-bg); }
+.aef-tool-result { background: var(--aef-tool-bg); }
+.aef-error { background: var(--aef-error-bg); }
 
-.alf-content {
+.aef-content {
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.alf-code {
+.aef-code {
   font-family: 'SF Mono', Consolas, monospace;
   font-size: 13px;
-  background: var(--alf-code-bg);
+  background: var(--aef-code-bg);
   padding: 12px;
   border-radius: 4px;
   overflow-x: auto;
 }
 
-.alf-collapsible {
+.aef-collapsible {
   cursor: pointer;
 }
 
-.alf-collapsible-content {
+.aef-collapsible-content {
   display: none;
 }
 
-.alf-collapsible.expanded .alf-collapsible-content {
+.aef-collapsible.expanded .aef-collapsible-content {
   display: block;
 }
 
-.alf-tool-name {
+.aef-tool-name {
   font-weight: 600;
-  color: var(--alf-accent);
+  color: var(--aef-accent);
 }
 
-.alf-duration {
-  color: var(--alf-muted);
+.aef-duration {
+  color: var(--aef-muted);
   font-size: 12px;
 }
 
-.alf-success { color: var(--alf-success); }
-.alf-failure { color: var(--alf-error); }
+.aef-success { color: var(--aef-success); }
+.aef-failure { color: var(--aef-error); }
 `;
 }

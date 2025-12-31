@@ -18,9 +18,9 @@ describe('generateWaterfall', () => {
 
   it('generates HTML structure', () => {
     const html = generateWaterfall(sampleItems);
-    expect(html).toContain('alf-waterfall');
-    expect(html).toContain('alf-waterfall-row');
-    expect(html).toContain('alf-waterfall-bar');
+    expect(html).toContain('aef-waterfall');
+    expect(html).toContain('aef-waterfall-row');
+    expect(html).toContain('aef-waterfall-bar');
   });
 
   it('includes labels', () => {
@@ -32,9 +32,9 @@ describe('generateWaterfall', () => {
 
   it('applies category classes', () => {
     const html = generateWaterfall(sampleItems);
-    expect(html).toContain('alf-waterfall-bar-tool');
-    expect(html).toContain('alf-waterfall-bar-llm');
-    expect(html).toContain('alf-waterfall-bar-api');
+    expect(html).toContain('aef-waterfall-bar-tool');
+    expect(html).toContain('aef-waterfall-bar-llm');
+    expect(html).toContain('aef-waterfall-bar-api');
   });
 
   it('handles empty items', () => {
@@ -47,7 +47,7 @@ describe('generateWaterfall', () => {
       { id: '1', label: 'Failed', startMs: 0, durationMs: 100, success: false },
     ];
     const html = generateWaterfall(items);
-    expect(html).toContain('alf-waterfall-bar-error');
+    expect(html).toContain('aef-waterfall-bar-error');
   });
 
   it('shows duration labels when enabled', () => {
@@ -58,7 +58,7 @@ describe('generateWaterfall', () => {
 
   it('shows axis when enabled', () => {
     const html = generateWaterfall(sampleItems, { showAxis: true });
-    expect(html).toContain('alf-waterfall-axis');
+    expect(html).toContain('aef-waterfall-axis');
     expect(html).toContain('0ms');
   });
 
@@ -72,7 +72,7 @@ describe('generateWaterfall', () => {
       { id: '1', label: 'Test', startMs: 0, durationMs: 100, meta: { key: 'value' } },
     ];
     const html = generateWaterfall(items);
-    expect(html).toContain('alf-waterfall-tooltip');
+    expect(html).toContain('aef-waterfall-tooltip');
     expect(html).toContain('key: value');
   });
 });
@@ -116,9 +116,9 @@ describe('generateCompactWaterfall', () => {
 describe('getWaterfallStyles', () => {
   it('returns CSS string', () => {
     const css = getWaterfallStyles();
-    expect(css).toContain('.alf-waterfall');
-    expect(css).toContain('.alf-waterfall-row');
-    expect(css).toContain('.alf-waterfall-bar');
+    expect(css).toContain('.aef-waterfall');
+    expect(css).toContain('.aef-waterfall-row');
+    expect(css).toContain('.aef-waterfall-bar');
   });
 
   it('applies custom colors', () => {

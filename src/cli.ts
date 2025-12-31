@@ -21,8 +21,8 @@ import type { ViewerOptions } from './viewer/types.js';
 const program = new Command();
 
 program
-  .name('alf')
-  .description('Agent Log Format utilities')
+  .name('aef')
+  .description('Agent Event Format utilities')
   .version('0.1.0');
 
 program

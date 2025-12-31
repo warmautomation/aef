@@ -45,19 +45,19 @@ function renderEntry(entry: AEFEntry, ctx: RenderContext): RenderedEntry | null 
 
 function renderExtension(entry: AEFEntry, ctx: RenderContext): RenderedEntry {
   const html = `
-    <div class="alf-entry-header">
-      <span class="alf-badge alf-badge-system">ext</span>
-      <span class="alf-extension-type">${escapeHtml(entry.type)}</span>
+    <div class="aef-entry-header">
+      <span class="aef-badge aef-badge-system">ext</span>
+      <span class="aef-extension-type">${escapeHtml(entry.type)}</span>
     </div>
-    <pre class="alf-code">${escapeHtml(JSON.stringify(entry, null, 2))}</pre>
+    <pre class="aef-code">${escapeHtml(JSON.stringify(entry, null, 2))}</pre>
   `;
-  return { html, entryId: entry.id, type: entry.type, cssClasses: ['alf-extension'] };
+  return { html, entryId: entry.id, type: entry.type, cssClasses: ['aef-extension'] };
 }
 
 function getCollapsibleScript(): string {
   return `
     document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('.alf-collapsible').forEach(function(el) {
+      document.querySelectorAll('.aef-collapsible').forEach(function(el) {
         el.addEventListener('click', function() {
           this.classList.toggle('expanded');
         });
@@ -87,7 +87,7 @@ function renderAggregations(
     const matchingEntries = entries.filter((e) => agg.types.includes(e.type));
     if (matchingEntries.length === 0) continue;
 
-    const html = `<div class="alf-aggregation" data-aggregation="${escapeHtml(agg.name)}">${agg.render(matchingEntries, ctx)}</div>`;
+    const html = `<div class="aef-aggregation" data-aggregation="${escapeHtml(agg.name)}">${agg.render(matchingEntries, ctx)}</div>`;
 
     if (agg.position === 'header') {
       header += html;
@@ -134,7 +134,7 @@ export function generateHtml(
     }
 
     if (rendered) {
-      const classes = ['alf-entry', ...(rendered.cssClasses ?? [])].join(' ');
+      const classes = ['aef-entry', ...(rendered.cssClasses ?? [])].join(' ');
       renderedEntries.push(`
         <div class="${classes}" data-entry-id="${escapeHtml(rendered.entryId)}" data-entry-type="${escapeHtml(rendered.type)}">
           ${rendered.html}
@@ -159,7 +159,7 @@ ${pluginStyles}
   </style>
 </head>
 <body>
-  <div class="alf-container">
+  <div class="aef-container">
     ${aggregationHtml.header}
     ${renderedEntries.join('\n')}
     ${aggregationHtml.footer}

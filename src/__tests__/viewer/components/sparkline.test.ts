@@ -65,7 +65,7 @@ describe('generateSparkline', () => {
 
   it('applies custom CSS class', () => {
     const svg = generateSparkline([1, 2, 3], { cssClass: 'my-sparkline' });
-    expect(svg).toContain('class="alf-sparkline my-sparkline"');
+    expect(svg).toContain('class="aef-sparkline my-sparkline"');
   });
 });
 

@@ -14,25 +14,25 @@ export function renderSessionStart(entry: SessionStart, ctx: RenderContext): Ren
   const version = entry.version ? escapeHtml(entry.version) : '';
   const workspace = entry.workspace ? escapeHtml(entry.workspace) : '';
 
-  let html = `<div class="alf-session-header">`;
+  let html = `<div class="aef-session-header">`;
   html += `<h1>Session: ${agent}</h1>`;
-  html += `<div class="alf-session-meta">`;
-  html += `<span class="alf-meta-item"><strong>Model:</strong> ${model}</span>`;
+  html += `<div class="aef-session-meta">`;
+  html += `<span class="aef-meta-item"><strong>Model:</strong> ${model}</span>`;
   if (version) {
-    html += ` <span class="alf-meta-item"><strong>Version:</strong> ${version}</span>`;
+    html += ` <span class="aef-meta-item"><strong>Version:</strong> ${version}</span>`;
   }
   if (workspace) {
-    html += ` <span class="alf-meta-item"><strong>Workspace:</strong> ${workspace}</span>`;
+    html += ` <span class="aef-meta-item"><strong>Workspace:</strong> ${workspace}</span>`;
   }
   html += `</div>`;
-  html += `<div class="alf-timestamp">${timestamp}</div>`;
+  html += `<div class="aef-timestamp">${timestamp}</div>`;
   html += `</div>`;
 
   return {
     html,
     entryId: entry.id,
     type: 'session.start',
-    cssClasses: ['alf-session-start'],
+    cssClasses: ['aef-session-start'],
   };
 }
 
@@ -42,28 +42,28 @@ export function renderSessionStart(entry: SessionStart, ctx: RenderContext): Ren
 export function renderSessionEnd(entry: SessionEnd, ctx: RenderContext): RenderedEntry {
   const timestamp = formatTimestamp(entry.ts);
   const status = escapeHtml(entry.status);
-  const statusClass = entry.status === 'complete' ? 'alf-success' : 'alf-failure';
+  const statusClass = entry.status === 'complete' ? 'aef-success' : 'aef-failure';
 
-  let html = `<div class="alf-session-footer">`;
-  html += `<div class="alf-entry-header">`;
-  html += `<span class="alf-badge alf-badge-system">Session End</span>`;
-  html += `<span class="alf-timestamp">${timestamp}</span>`;
+  let html = `<div class="aef-session-footer">`;
+  html += `<div class="aef-entry-header">`;
+  html += `<span class="aef-badge aef-badge-system">Session End</span>`;
+  html += `<span class="aef-timestamp">${timestamp}</span>`;
   html += `</div>`;
-  html += `<div class="alf-session-status ${statusClass}">Status: ${status}</div>`;
+  html += `<div class="aef-session-status ${statusClass}">Status: ${status}</div>`;
 
   if (entry.summary) {
-    html += `<div class="alf-session-summary">`;
+    html += `<div class="aef-session-summary">`;
     if (entry.summary.messages !== undefined) {
-      html += `<span class="alf-summary-item"><strong>Messages:</strong> ${entry.summary.messages}</span> `;
+      html += `<span class="aef-summary-item"><strong>Messages:</strong> ${entry.summary.messages}</span> `;
     }
     if (entry.summary.tool_calls !== undefined) {
-      html += `<span class="alf-summary-item"><strong>Tool Calls:</strong> ${entry.summary.tool_calls}</span> `;
+      html += `<span class="aef-summary-item"><strong>Tool Calls:</strong> ${entry.summary.tool_calls}</span> `;
     }
     if (entry.summary.duration_ms !== undefined) {
-      html += `<span class="alf-summary-item"><strong>Duration:</strong> ${formatDuration(entry.summary.duration_ms)}</span> `;
+      html += `<span class="aef-summary-item"><strong>Duration:</strong> ${formatDuration(entry.summary.duration_ms)}</span> `;
     }
     if (entry.summary.tokens) {
-      html += `<span class="alf-summary-item"><strong>Tokens:</strong> ${entry.summary.tokens.input} in / ${entry.summary.tokens.output} out</span>`;
+      html += `<span class="aef-summary-item"><strong>Tokens:</strong> ${entry.summary.tokens.input} in / ${entry.summary.tokens.output} out</span>`;
     }
     html += `</div>`;
   }
@@ -74,6 +74,6 @@ export function renderSessionEnd(entry: SessionEnd, ctx: RenderContext): Rendere
     html,
     entryId: entry.id,
     type: 'session.end',
-    cssClasses: ['alf-session-end'],
+    cssClasses: ['aef-session-end'],
   };
 }

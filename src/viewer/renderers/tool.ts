@@ -39,21 +39,21 @@ export function renderToolCall(entry: ToolCall, ctx: RenderContext): RenderedEnt
   const toolName = escapeHtml(entry.tool);
   const args = renderArgs(entry.args, ctx.options.maxContentLength);
 
-  let html = `<div class="alf-entry-header">`;
-  html += `<span class="alf-badge alf-badge-tool">Tool Call</span>`;
-  html += `<span class="alf-tool-name">${toolName}</span>`;
-  html += `<span class="alf-timestamp">${timestamp}</span>`;
+  let html = `<div class="aef-entry-header">`;
+  html += `<span class="aef-badge aef-badge-tool">Tool Call</span>`;
+  html += `<span class="aef-tool-name">${toolName}</span>`;
+  html += `<span class="aef-timestamp">${timestamp}</span>`;
   html += `</div>`;
 
-  html += `<div class="alf-tool-args">`;
-  html += `<pre class="alf-code">${args}</pre>`;
+  html += `<div class="aef-tool-args">`;
+  html += `<pre class="aef-code">${args}</pre>`;
   html += `</div>`;
 
   return {
     html,
     entryId: entry.id,
     type: 'tool.call',
-    cssClasses: ['alf-entry', 'alf-tool-call'],
+    cssClasses: ['aef-entry', 'aef-tool-call'],
   };
 }
 
@@ -63,31 +63,31 @@ export function renderToolCall(entry: ToolCall, ctx: RenderContext): RenderedEnt
 export function renderToolResult(entry: ToolResult, ctx: RenderContext): RenderedEntry {
   const timestamp = formatTimestamp(entry.ts);
   const toolName = escapeHtml(entry.tool);
-  const statusClass = entry.success ? 'alf-success' : 'alf-failure';
+  const statusClass = entry.success ? 'aef-success' : 'aef-failure';
   const statusLabel = entry.success ? 'Success' : 'Failed';
 
-  let html = `<div class="alf-entry-header">`;
-  html += `<span class="alf-badge alf-badge-tool">Tool Result</span>`;
-  html += `<span class="alf-tool-name">${toolName}</span>`;
+  let html = `<div class="aef-entry-header">`;
+  html += `<span class="aef-badge aef-badge-tool">Tool Result</span>`;
+  html += `<span class="aef-tool-name">${toolName}</span>`;
   html += `<span class="${statusClass}">${statusLabel}</span>`;
   if (entry.duration_ms !== undefined) {
-    html += `<span class="alf-duration">${formatDuration(entry.duration_ms)}</span>`;
+    html += `<span class="aef-duration">${formatDuration(entry.duration_ms)}</span>`;
   }
-  html += `<span class="alf-timestamp">${timestamp}</span>`;
+  html += `<span class="aef-timestamp">${timestamp}</span>`;
   html += `</div>`;
 
   // Render result or error
   if (entry.success && entry.result !== undefined) {
     const result = renderResult(entry.result, ctx.options.maxContentLength);
-    html += `<div class="alf-tool-output">`;
-    html += `<pre class="alf-code">${result}</pre>`;
+    html += `<div class="aef-tool-output">`;
+    html += `<pre class="aef-code">${result}</pre>`;
     html += `</div>`;
   } else if (!entry.success && entry.error) {
-    html += `<div class="alf-tool-error ${statusClass}">`;
+    html += `<div class="aef-tool-error ${statusClass}">`;
     if (entry.error.code) {
-      html += `<span class="alf-error-code">[${escapeHtml(entry.error.code)}]</span> `;
+      html += `<span class="aef-error-code">[${escapeHtml(entry.error.code)}]</span> `;
     }
-    html += `<span class="alf-error-message">${escapeHtml(entry.error.message)}</span>`;
+    html += `<span class="aef-error-message">${escapeHtml(entry.error.message)}</span>`;
     html += `</div>`;
   }
 
@@ -95,6 +95,6 @@ export function renderToolResult(entry: ToolResult, ctx: RenderContext): Rendere
     html,
     entryId: entry.id,
     type: 'tool.result',
-    cssClasses: ['alf-entry', 'alf-tool-result', statusClass],
+    cssClasses: ['aef-entry', 'aef-tool-result', statusClass],
   };
 }

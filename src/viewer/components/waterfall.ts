@@ -64,7 +64,7 @@ const DEFAULT_OPTIONS: WaterfallOptions = {
   showDuration: true,
   showAxis: true,
   minBarWidth: 4,
-  cssClassPrefix: 'alf-waterfall',
+  cssClassPrefix: 'aef-waterfall',
   colors: {
     tool: '#f59e0b',
     llm: '#8b5cf6',
@@ -311,7 +311,7 @@ export function generateCompactWaterfall(
     </rect>`;
   });
 
-  return `<svg width="${width}" height="${height}" class="alf-waterfall-compact">
+  return `<svg width="${width}" height="${height}" class="aef-waterfall-compact">
   <rect x="0" y="0" width="${width}" height="${height}" fill="#f1f5f9" rx="3" />
   ${bars.join('\n  ')}
 </svg>`;
