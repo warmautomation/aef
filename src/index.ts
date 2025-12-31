@@ -1,5 +1,5 @@
 /**
- * ALF - Agent Log Format
+ * AEF - Agent Log Format
  *
  * Normalized log format for AI coding agents.
  */
@@ -9,9 +9,9 @@ export * from './types.js';
 
 // Validator (syntactic - schema-based)
 export {
-  validateALFEntry,
-  validateALFFile,
-  validateALFStream,
+  validateAEFEntry,
+  validateAEFFile,
+  validateAEFStream,
   type ValidationResult,
   type ValidationStats,
   type StreamValidationResult,

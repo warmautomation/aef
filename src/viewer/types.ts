@@ -1,4 +1,4 @@
-import type { ALFEntry, CoreEntry } from '../types.js';
+import type { AEFEntry, CoreEntry } from '../types.js';
 
 /**
  * Options for HTML generation
@@ -25,7 +25,7 @@ export interface RenderContext {
   totalEntries: number;
   options: ViewerOptions;
   /** All entries in session (for cross-referencing) */
-  entries?: ALFEntry[];
+  entries?: AEFEntry[];
 }
 
 /**
@@ -42,7 +42,7 @@ export interface RenderedEntry {
 /**
  * Entry renderer function signature
  */
-export type EntryRenderer<T extends ALFEntry = ALFEntry> = (
+export type EntryRenderer<T extends AEFEntry = AEFEntry> = (
   entry: T,
   ctx: RenderContext
 ) => RenderedEntry | null;

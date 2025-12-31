@@ -1,0 +1,5 @@
+{"v":1,"id":"01","ts":1000,"type":"session.start","sid":"s1","agent":"test"}
+{"v":1,"id":"02","ts":1001,"type":"message","sid":"s1","role":"user","content":"query beliefs","seq":0}
+{"v":1,"id":"03","ts":1002,"type":"warmhub.belief.query","sid":"s1","query":"user intent","pid":"02"}
+{"v":1,"id":"04","ts":1003,"type":"message","sid":"s1","role":"assistant","content":"understood","seq":1,"pid":"03"}
+{"v":1,"id":"05","ts":1004,"type":"session.end","sid":"s1","status":"complete"}

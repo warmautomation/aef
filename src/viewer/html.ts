@@ -1,6 +1,6 @@
 // src/viewer/html.ts
 
-import type { ALFEntry, SessionStart, SessionEnd, Message, ToolCall, ToolResult, ErrorEntry } from '../types.js';
+import type { AEFEntry, SessionStart, SessionEnd, Message, ToolCall, ToolResult, ErrorEntry } from '../types.js';
 import type { ViewerOptions, RenderContext, RenderedEntry } from './types.js';
 import { getCoreStyles } from './styles.js';
 import { renderSessionStart, renderSessionEnd } from './renderers/session.js';
@@ -24,7 +24,7 @@ function isCoreType(type: string): boolean {
   return CORE_TYPES.includes(type);
 }
 
-function renderEntry(entry: ALFEntry, ctx: RenderContext): RenderedEntry | null {
+function renderEntry(entry: AEFEntry, ctx: RenderContext): RenderedEntry | null {
   switch (entry.type) {
     case 'session.start':
       return renderSessionStart(entry as SessionStart, ctx);
@@ -43,7 +43,7 @@ function renderEntry(entry: ALFEntry, ctx: RenderContext): RenderedEntry | null 
   }
 }
 
-function renderExtension(entry: ALFEntry, ctx: RenderContext): RenderedEntry {
+function renderExtension(entry: AEFEntry, ctx: RenderContext): RenderedEntry {
   const html = `
     <div class="alf-entry-header">
       <span class="alf-badge alf-badge-system">ext</span>
@@ -67,7 +67,7 @@ function getCollapsibleScript(): string {
 }
 
 function renderAggregations(
-  entries: ALFEntry[],
+  entries: AEFEntry[],
   registry: PluginRegistry,
   opts: ViewerOptions
 ): { header: string; footer: string } {
@@ -100,7 +100,7 @@ function renderAggregations(
 }
 
 export function generateHtml(
-  entries: ALFEntry[],
+  entries: AEFEntry[],
   options: ViewerOptions = {},
   registry: PluginRegistry = defaultRegistry
 ): string {
@@ -152,7 +152,7 @@ export function generateHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALF Trace - ${escapeHtml(sessionId)}</title>
+  <title>AEF Trace - ${escapeHtml(sessionId)}</title>
   <style>
 ${getCoreStyles(opts.theme ?? 'light')}
 ${pluginStyles}

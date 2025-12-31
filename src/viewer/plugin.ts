@@ -1,11 +1,11 @@
 // src/viewer/plugin.ts
-import type { ALFEntry } from '../types.js';
+import type { AEFEntry } from '../types.js';
 import type { RenderContext, RenderedEntry } from './types.js';
 
 export interface PluginAggregation {
   name: string;
   types: string[];
-  render: (entries: ALFEntry[], ctx: RenderContext) => string;
+  render: (entries: AEFEntry[], ctx: RenderContext) => string;
   position?: 'header' | 'footer' | 'inline';
 }
 
@@ -14,7 +14,7 @@ export interface ViewerPlugin {
   readonly name: string;
   readonly description?: string;
   readonly version?: string;
-  renderEntry?: (entry: ALFEntry, ctx: RenderContext) => RenderedEntry | null;
+  renderEntry?: (entry: AEFEntry, ctx: RenderContext) => RenderedEntry | null;
   aggregations?: PluginAggregation[];
   styles?: string;
   scripts?: string;

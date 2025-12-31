@@ -1,0 +1,8 @@
+{"v":1,"id":"01","ts":1000,"type":"session.start","sid":"s1","agent":"test"}
+{"v":1,"id":"02","ts":1001,"type":"message","sid":"s1","role":"user","content":"run both commands","seq":0}
+{"v":1,"id":"03","ts":1002,"type":"tool.call","sid":"s1","tool":"cmd1","args":{},"call_id":"tc1","pid":"02"}
+{"v":1,"id":"04","ts":1002,"type":"tool.call","sid":"s1","tool":"cmd2","args":{},"call_id":"tc2","pid":"02"}
+{"v":1,"id":"05","ts":1003,"type":"tool.result","sid":"s1","tool":"cmd1","success":true,"result":"r1","call_id":"tc1","pid":"03"}
+{"v":1,"id":"06","ts":1004,"type":"tool.result","sid":"s1","tool":"cmd2","success":true,"result":"r2","call_id":"tc2","pid":"04"}
+{"v":1,"id":"07","ts":1005,"type":"message","sid":"s1","role":"assistant","content":"both done","seq":1,"pid":"06","deps":["05","06"]}
+{"v":1,"id":"08","ts":1006,"type":"session.end","sid":"s1","status":"complete"}

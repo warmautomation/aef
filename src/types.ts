@@ -1,7 +1,7 @@
 /**
- * ALF Core Type Definitions
+ * AEF Core Type Definitions
  *
- * Extensions are NOT defined here - they use the base ALFEntry interface
+ * Extensions are NOT defined here - they use the base AEFEntry interface
  * and are validated by namespace pattern matching. See docs/extensions.md
  * for extension schema documentation.
  */
@@ -11,9 +11,9 @@
 // =============================================================================
 
 /**
- * Base ALF entry - all entries must have these fields
+ * Base AEF entry - all entries must have these fields
  */
-export interface ALFEntry {
+export interface AEFEntry {
   /** Schema version */
   v: 1;
   /** Entry ID (UUIDv7 or ULID recommended) */
@@ -28,12 +28,14 @@ export interface ALFEntry {
   pid?: string;
   /** Sequence number within session */
   seq?: number;
+  /** Additional dependency IDs for multi-parent scenarios (e.g., parallel tool results) */
+  deps?: string[];
 }
 
 /**
  * Session start entry
  */
-export interface SessionStart extends ALFEntry {
+export interface SessionStart extends AEFEntry {
   type: 'session.start';
   agent: string;
   version?: string;
@@ -45,7 +47,7 @@ export interface SessionStart extends ALFEntry {
 /**
  * Session end entry
  */
-export interface SessionEnd extends ALFEntry {
+export interface SessionEnd extends AEFEntry {
   type: 'session.end';
   status: 'complete' | 'error' | 'timeout' | 'user_abort';
   summary?: {
@@ -59,10 +61,12 @@ export interface SessionEnd extends ALFEntry {
 /**
  * Message entry (user, assistant, or system)
  */
-export interface Message extends ALFEntry {
+export interface Message extends AEFEntry {
   type: 'message';
   role: 'user' | 'assistant' | 'system';
   content: string | ContentBlock[];
+  /** Model used for this message (overrides session.model for multi-model sessions) */
+  model?: string;
   tokens?: { input?: number; output?: number; cached?: number };
 }
 
@@ -77,7 +81,7 @@ export type ContentBlock =
 /**
  * Tool call entry
  */
-export interface ToolCall extends ALFEntry {
+export interface ToolCall extends AEFEntry {
   type: 'tool.call';
   tool: string;
   args: Record<string, unknown>;
@@ -86,21 +90,27 @@ export interface ToolCall extends ALFEntry {
 
 /**
  * Tool result entry
+ *
+ * Output requirements:
+ * - When success: true, result SHOULD be present
+ * - When success: false, error MUST be present with at least a message
  */
-export interface ToolResult extends ALFEntry {
+export interface ToolResult extends AEFEntry {
   type: 'tool.result';
   tool: string;
   call_id?: string;
-  result: unknown;
+  /** Tool output. SHOULD be present when success: true */
+  result?: unknown;
   success: boolean;
   duration_ms?: number;
+  /** Error details. MUST be present when success: false */
   error?: { code?: string; message: string };
 }
 
 /**
  * Error entry
  */
-export interface ErrorEntry extends ALFEntry {
+export interface ErrorEntry extends AEFEntry {
   type: 'error';
   code?: string;
   message: string;
@@ -119,6 +129,12 @@ export type CoreEntry =
   | ToolResult
   | ErrorEntry;
 
+/**
+ * Any AEF entry - core or extension
+ * Extensions have the base fields plus arbitrary additional fields
+ */
+export type AnyAEFEntry = AEFEntry & Record<string, unknown>;
+
 // =============================================================================
 // Type Guards
 // =============================================================================
@@ -135,14 +151,14 @@ const CORE_TYPES = [
 /**
  * Type guard for core entry types
  */
-export function isCoreEntry(entry: ALFEntry): entry is CoreEntry {
+export function isCoreEntry(entry: AEFEntry): entry is CoreEntry {
   return CORE_TYPES.includes(entry.type as (typeof CORE_TYPES)[number]);
 }
 
 /**
  * Type guard for extension entries (namespaced types like vendor.category.type)
  */
-export function isExtensionEntry(entry: ALFEntry): boolean {
+export function isExtensionEntry(entry: AEFEntry): boolean {
   // Extensions have at least 2 dots (vendor.category.type) and are not core types
   const dotCount = (entry.type.match(/\./g) || []).length;
   return dotCount >= 2 && !isCoreEntry(entry);
@@ -151,7 +167,7 @@ export function isExtensionEntry(entry: ALFEntry): boolean {
 /**
  * Check if an entry has valid base fields (for extension validation)
  */
-export function hasValidBaseFields(entry: unknown): entry is ALFEntry {
+export function hasValidBaseFields(entry: unknown): entry is AEFEntry {
   if (typeof entry !== 'object' || entry === null) return false;
   const e = entry as Record<string, unknown>;
   return (

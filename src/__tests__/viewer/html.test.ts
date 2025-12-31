@@ -1,10 +1,10 @@
 // src/__tests__/viewer/html.test.ts
 import { describe, it, expect } from 'bun:test';
 import { generateHtml } from '../../viewer/html.js';
-import type { ALFEntry, SessionStart, Message, SessionEnd } from '../../types.js';
+import type { AEFEntry, SessionStart, Message, SessionEnd } from '../../types.js';
 
 describe('generateHtml', () => {
-  const entries: ALFEntry[] = [
+  const entries: AEFEntry[] = [
     {
       v: 1, id: 'sess-1', ts: 1704067200000, type: 'session.start',
       sid: 'test-session', agent: 'claude-code',
@@ -67,7 +67,7 @@ describe('generateHtml with plugins', () => {
     };
     registry.register(plugin);
 
-    const entries: ALFEntry[] = [
+    const entries: AEFEntry[] = [
       { v: 1, id: 'ext-1', ts: 1704067200000, type: 'custom.widget.foo', sid: 'test-session' },
     ];
 
@@ -84,7 +84,7 @@ describe('generateHtml with plugins', () => {
       styles: '.custom-style { color: red; }',
     });
 
-    const entries: ALFEntry[] = [
+    const entries: AEFEntry[] = [
       { v: 1, id: 's1', ts: 1704067200000, type: 'session.start', sid: 'test', agent: 'test' } as SessionStart,
     ];
 
@@ -107,7 +107,7 @@ describe('generateHtml with plugins', () => {
       ],
     });
 
-    const entries: ALFEntry[] = [
+    const entries: AEFEntry[] = [
       { v: 1, id: 's1', ts: 1704067200000, type: 'session.start', sid: 'test', agent: 'test' } as SessionStart,
       { v: 1, id: 'a1', ts: 1704067201000, type: 'agg.item', sid: 'test' },
       { v: 1, id: 'a2', ts: 1704067202000, type: 'agg.item', sid: 'test' },

@@ -1,0 +1,316 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://warmautomation.com/schemas/alf/v1/core.schema.json",
+  "title": "AEF Core Schema",
+  "description": "Agent Log Format core entry types",
+
+  "definitions": {
+    "baseEntry": {
+      "type": "object",
+      "required": ["v", "id", "ts", "type", "sid"],
+      "properties": {
+        "v": {
+          "type": "integer",
+          "const": 1,
+          "description": "Schema version"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique entry ID (UUIDv7 or ULID recommended)"
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Unix timestamp in milliseconds"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Entry type"
+        },
+        "sid": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Session ID"
+        },
+        "pid": {
+          "type": "string",
+          "description": "Parent ID for threading/causality"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within session"
+        },
+        "deps": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Additional dependency IDs for multi-parent scenarios"
+        }
+      }
+    },
+
+    "contentBlock": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "text"],
+          "properties": {
+            "type": { "const": "text" },
+            "text": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "id", "name", "input"],
+          "properties": {
+            "type": { "const": "tool_use" },
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "input": { "type": "object" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "tool_use_id", "content"],
+          "properties": {
+            "type": { "const": "tool_result" },
+            "tool_use_id": { "type": "string" },
+            "content": { "type": "string" },
+            "is_error": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+
+    "sessionStart": {
+      "allOf": [
+        { "$ref": "#/definitions/baseEntry" },
+        {
+          "type": "object",
+          "required": ["agent"],
+          "properties": {
+            "type": { "const": "session.start" },
+            "agent": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Agent identifier"
+            },
+            "version": {
+              "type": "string",
+              "description": "Agent version"
+            },
+            "workspace": {
+              "type": "string",
+              "description": "Working directory or workspace path"
+            },
+            "model": {
+              "type": "string",
+              "description": "LLM model identifier"
+            },
+            "meta": {
+              "type": "object",
+              "description": "Additional metadata"
+            }
+          }
+        }
+      ]
+    },
+
+    "sessionEnd": {
+      "allOf": [
+        { "$ref": "#/definitions/baseEntry" },
+        {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "type": { "const": "session.end" },
+            "status": {
+              "type": "string",
+              "enum": ["complete", "error", "timeout", "user_abort"],
+              "description": "Session end status"
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "messages": { "type": "integer", "minimum": 0 },
+                "tool_calls": { "type": "integer", "minimum": 0 },
+                "duration_ms": { "type": "integer", "minimum": 0 },
+                "tokens": {
+                  "type": "object",
+                  "properties": {
+                    "input": { "type": "integer", "minimum": 0 },
+                    "output": { "type": "integer", "minimum": 0 }
+                  },
+                  "required": ["input", "output"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "message": {
+      "allOf": [
+        { "$ref": "#/definitions/baseEntry" },
+        {
+          "type": "object",
+          "required": ["role", "content"],
+          "properties": {
+            "type": { "const": "message" },
+            "role": {
+              "type": "string",
+              "enum": ["user", "assistant", "system"],
+              "description": "Message role"
+            },
+            "content": {
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/definitions/contentBlock" }
+                }
+              ],
+              "description": "Message content (string or content blocks)"
+            },
+            "tokens": {
+              "type": "object",
+              "properties": {
+                "input": { "type": "integer", "minimum": 0 },
+                "output": { "type": "integer", "minimum": 0 },
+                "cached": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "toolCall": {
+      "allOf": [
+        { "$ref": "#/definitions/baseEntry" },
+        {
+          "type": "object",
+          "required": ["tool", "args"],
+          "properties": {
+            "type": { "const": "tool.call" },
+            "tool": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tool name"
+            },
+            "args": {
+              "type": "object",
+              "description": "Tool arguments"
+            },
+            "call_id": {
+              "type": "string",
+              "description": "Unique call ID for correlating with tool.result"
+            }
+          }
+        }
+      ]
+    },
+
+    "toolResult": {
+      "allOf": [
+        { "$ref": "#/definitions/baseEntry" },
+        {
+          "type": "object",
+          "required": ["tool", "success"],
+          "properties": {
+            "type": { "const": "tool.result" },
+            "tool": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Tool name"
+            },
+            "call_id": {
+              "type": "string",
+              "description": "Correlates with tool.call"
+            },
+            "result": {
+              "description": "Tool result (any type)"
+            },
+            "success": {
+              "type": "boolean",
+              "description": "Whether tool execution succeeded"
+            },
+            "duration_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Execution duration in milliseconds"
+            },
+            "error": {
+              "type": "object",
+              "required": ["message"],
+              "properties": {
+                "code": { "type": "string" },
+                "message": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "error": {
+      "allOf": [
+        { "$ref": "#/definitions/baseEntry" },
+        {
+          "type": "object",
+          "required": ["message"],
+          "properties": {
+            "type": { "const": "error" },
+            "code": {
+              "type": "string",
+              "description": "Error code"
+            },
+            "message": {
+              "type": "string",
+              "description": "Error message"
+            },
+            "stack": {
+              "type": "string",
+              "description": "Stack trace"
+            },
+            "recoverable": {
+              "type": "boolean",
+              "description": "Whether the error is recoverable"
+            }
+          }
+        }
+      ]
+    }
+  },
+
+  "oneOf": [
+    { "$ref": "#/definitions/sessionStart" },
+    { "$ref": "#/definitions/sessionEnd" },
+    { "$ref": "#/definitions/message" },
+    { "$ref": "#/definitions/toolCall" },
+    { "$ref": "#/definitions/toolResult" },
+    { "$ref": "#/definitions/error" },
+    {
+      "allOf": [
+        { "$ref": "#/definitions/baseEntry" },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9]*\\.[a-z][a-z0-9]*\\.[a-z][a-z0-9]*$",
+              "description": "Extension type (vendor.category.type pattern)"
+            }
+          }
+        }
+      ],
+      "description": "Extension entry with namespaced type"
+    }
+  ]
+}
