@@ -49,3 +49,72 @@ describe('generateHtml', () => {
     expect(html).toContain('alf-collapsible');
   });
 });
+
+import { PluginRegistry } from '../../viewer/registry.js';
+import type { ViewerPlugin } from '../../viewer/plugin.js';
+
+describe('generateHtml with plugins', () => {
+  it('uses plugin renderer for matching entries', () => {
+    const registry = new PluginRegistry();
+    const plugin: ViewerPlugin = {
+      namespace: 'custom.*',
+      name: 'Custom Plugin',
+      renderEntry: (entry, ctx) => ({
+        html: '<div class="custom-rendered">Custom!</div>',
+        entryId: entry.id,
+        type: entry.type,
+      }),
+    };
+    registry.register(plugin);
+
+    const entries: ALFEntry[] = [
+      { v: 1, id: 'ext-1', ts: 1704067200000, type: 'custom.widget.foo', sid: 'test-session' },
+    ];
+
+    const html = generateHtml(entries, {}, registry);
+    expect(html).toContain('custom-rendered');
+    expect(html).toContain('Custom!');
+  });
+
+  it('includes plugin styles', () => {
+    const registry = new PluginRegistry();
+    registry.register({
+      namespace: 'styled.*',
+      name: 'Styled Plugin',
+      styles: '.custom-style { color: red; }',
+    });
+
+    const entries: ALFEntry[] = [
+      { v: 1, id: 's1', ts: 1704067200000, type: 'session.start', sid: 'test', agent: 'test' } as SessionStart,
+    ];
+
+    const html = generateHtml(entries, {}, registry);
+    expect(html).toContain('.custom-style');
+  });
+
+  it('renders aggregations', () => {
+    const registry = new PluginRegistry();
+    registry.register({
+      namespace: 'agg.*',
+      name: 'Aggregation Plugin',
+      aggregations: [
+        {
+          name: 'summary',
+          types: ['agg.item'],
+          position: 'footer',
+          render: (entries) => `<div class="agg-summary">Count: ${entries.length}</div>`,
+        },
+      ],
+    });
+
+    const entries: ALFEntry[] = [
+      { v: 1, id: 's1', ts: 1704067200000, type: 'session.start', sid: 'test', agent: 'test' } as SessionStart,
+      { v: 1, id: 'a1', ts: 1704067201000, type: 'agg.item', sid: 'test' },
+      { v: 1, id: 'a2', ts: 1704067202000, type: 'agg.item', sid: 'test' },
+    ];
+
+    const html = generateHtml(entries, {}, registry);
+    expect(html).toContain('agg-summary');
+    expect(html).toContain('Count: 2');
+  });
+});

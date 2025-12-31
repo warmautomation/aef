@@ -8,6 +8,7 @@ import { renderMessage } from './renderers/message.js';
 import { renderToolCall, renderToolResult } from './renderers/tool.js';
 import { renderError } from './renderers/error.js';
 import { escapeHtml } from './utils.js';
+import { PluginRegistry, defaultRegistry } from './registry.js';
 
 const DEFAULT_OPTIONS: ViewerOptions = {
   theme: 'light',
@@ -16,6 +17,12 @@ const DEFAULT_OPTIONS: ViewerOptions = {
   showTimestamps: true,
   showSequence: false,
 };
+
+const CORE_TYPES = ['session.start', 'session.end', 'message', 'tool.call', 'tool.result', 'error'];
+
+function isCoreType(type: string): boolean {
+  return CORE_TYPES.includes(type);
+}
 
 function renderEntry(entry: ALFEntry, ctx: RenderContext): RenderedEntry | null {
   switch (entry.type) {
@@ -59,7 +66,44 @@ function getCollapsibleScript(): string {
   `;
 }
 
-export function generateHtml(entries: ALFEntry[], options: ViewerOptions = {}): string {
+function renderAggregations(
+  entries: ALFEntry[],
+  registry: PluginRegistry,
+  opts: ViewerOptions
+): { header: string; footer: string } {
+  const aggregations = registry.getAggregations();
+  let header = '';
+  let footer = '';
+
+  const ctx: RenderContext = {
+    sessionId: entries[0]?.sid ?? 'unknown',
+    entryIndex: 0,
+    totalEntries: entries.length,
+    options: opts,
+    entries,
+  };
+
+  for (const agg of aggregations) {
+    const matchingEntries = entries.filter((e) => agg.types.includes(e.type));
+    if (matchingEntries.length === 0) continue;
+
+    const html = `<div class="alf-aggregation" data-aggregation="${escapeHtml(agg.name)}">${agg.render(matchingEntries, ctx)}</div>`;
+
+    if (agg.position === 'header') {
+      header += html;
+    } else {
+      footer += html;
+    }
+  }
+
+  return { header, footer };
+}
+
+export function generateHtml(
+  entries: ALFEntry[],
+  options: ViewerOptions = {},
+  registry: PluginRegistry = defaultRegistry
+): string {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const sessionId = entries[0]?.sid ?? 'unknown';
 
@@ -75,7 +119,20 @@ export function generateHtml(entries: ALFEntry[], options: ViewerOptions = {}): 
       entries,
     };
 
-    const rendered = renderEntry(entry, ctx);
+    // Try plugin first for non-core types
+    let rendered: RenderedEntry | null = null;
+    if (!isCoreType(entry.type)) {
+      const plugin = registry.findPlugin(entry.type);
+      if (plugin?.renderEntry) {
+        rendered = plugin.renderEntry(entry, ctx);
+      }
+    }
+
+    // Fall back to core renderer
+    if (!rendered) {
+      rendered = renderEntry(entry, ctx);
+    }
+
     if (rendered) {
       const classes = ['alf-entry', ...(rendered.cssClasses ?? [])].join(' ');
       renderedEntries.push(`
@@ -86,6 +143,10 @@ export function generateHtml(entries: ALFEntry[], options: ViewerOptions = {}): 
     }
   }
 
+  const aggregationHtml = renderAggregations(entries, registry, opts);
+  const pluginStyles = registry.getStyles();
+  const pluginScripts = registry.getScripts();
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -94,13 +155,17 @@ export function generateHtml(entries: ALFEntry[], options: ViewerOptions = {}): 
   <title>ALF Trace - ${escapeHtml(sessionId)}</title>
   <style>
 ${getCoreStyles(opts.theme ?? 'light')}
+${pluginStyles}
   </style>
 </head>
 <body>
   <div class="alf-container">
+    ${aggregationHtml.header}
     ${renderedEntries.join('\n')}
+    ${aggregationHtml.footer}
   </div>
   ${opts.collapsedTools ? `<script>${getCollapsibleScript()}</script>` : ''}
+  ${pluginScripts ? `<script>${pluginScripts}</script>` : ''}
 </body>
 </html>`;
 }
