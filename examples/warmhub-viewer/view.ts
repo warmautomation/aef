@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // examples/warmhub-viewer/view.ts
 //
-// Example script demonstrating how to use the WarmHub plugin with ALF viewer.
+// Example script demonstrating how to use the WarmHub plugin with AEF viewer.
 // Run with: bun examples/warmhub-viewer/view.ts [input.jsonl] [output.html]
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -12,7 +12,7 @@ import { warmhubPlugin } from './plugin.js';
 const inputFile = process.argv[2] || 'examples/warmhub-viewer/sample-trace.jsonl';
 const outputFile = process.argv[3] || 'warmhub-output.html';
 
-// Read and parse the ALF JSONL file
+// Read and parse the AEF JSONL file
 const content = readFileSync(inputFile, 'utf-8');
 const entries: AEFEntry[] = content
   .trim()
@@ -28,10 +28,7 @@ console.log(`Loaded plugin: ${warmhubPlugin.name}`);
 console.log(`Processing ${entries.length} entries from ${inputFile}`);
 
 // Generate HTML with the plugin
-const html = generateHtml(entries, {
-  theme: 'light',
-  registry,
-});
+const html = generateHtml(entries, { theme: 'light' }, registry);
 
 // Write output
 writeFileSync(outputFile, html);

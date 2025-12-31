@@ -130,7 +130,7 @@ function validateSessionBoundaries(
       errors.push({
         rule: 'session-start-first',
         message: `session.start must be first entry for session '${sid}', but found '${firstEntry.type}' first`,
-        specRef: '§4.1',
+        specRef: '§3.1.4',
         entryIds: [startEntry.id, firstEntry.id],
       });
     }
@@ -141,7 +141,7 @@ function validateSessionBoundaries(
       errors.push({
         rule: 'session-end-last',
         message: `session.end must be last entry for session '${sid}', but found '${lastEntry.type}' last`,
-        specRef: '§4.2',
+        specRef: '§3.1.4',
         entryIds: [endEntry.id, lastEntry.id],
       });
     }
@@ -189,7 +189,7 @@ function validateSessionContiguity(
 }
 
 /**
- * §3.2: seq MUST be monotonically increasing within session
+ * §3.2.1: seq MUST be monotonically increasing within session
  */
 function validateSeqMonotonicity(
   entries: AEFEntry[],
@@ -208,7 +208,7 @@ function validateSeqMonotonicity(
         errors.push({
           rule: 'seq-monotonic',
           message: `seq must be monotonically increasing: found ${entry.seq} after ${lastSeq} in session '${sid}'`,
-          specRef: '§3.2',
+          specRef: '§3.2.1',
           entryIds: [lastSeqEntryId!, entry.id],
         });
       }
@@ -303,6 +303,13 @@ function validatePidExists(
         specRef: '§6.2',
         entryIds: [entry.id, entry.pid],
       });
+    } else if (parent.entry.sid !== entry.sid) {
+      errors.push({
+        rule: 'pid-same-session',
+        message: `pid references entry in different session`,
+        specRef: '§3.1.4',
+        entryIds: [entry.id, entry.pid],
+      });
     }
   }
 }
@@ -335,6 +342,13 @@ function validateDepsExist(
           specRef: '§6.2',
           entryIds: [entry.id, depId],
         });
+      } else if (dep.entry.sid !== entry.sid) {
+        errors.push({
+          rule: 'deps-same-session',
+          message: `deps contains entry from different session`,
+          specRef: '§3.1.4',
+          entryIds: [entry.id, depId],
+        });
       }
     }
   }
@@ -345,7 +359,7 @@ function validateDepsExist(
 // =============================================================================
 
 /**
- * §3.2.1: Timestamps SHOULD be monotonically increasing within session
+ * §3.1.2: Timestamps SHOULD be monotonically increasing within session
  */
 function validateTimestampMonotonicity(
   entries: AEFEntry[],
@@ -363,7 +377,7 @@ function validateTimestampMonotonicity(
         warnings.push({
           rule: 'ts-monotonic',
           message: `Timestamp decreased from ${lastTs} to ${entry.ts} in session '${sid}'`,
-          specRef: '§3.2.1',
+          specRef: '§3.1.2',
           entryIds: [lastTsEntryId!, entry.id],
         });
       }

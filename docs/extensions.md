@@ -5,6 +5,8 @@ This document defines how to create extension schemas for domain-specific agent 
 ## Extension Design Principles
 
 1. **Namespace Convention**: `<vendor>.<category>.<type>` (minimum 3 segments)
+   - Each segment must start with a lowercase letter
+   - Segments may contain lowercase letters, digits, and hyphens
 2. **Base Compatibility**: All extensions MUST include base `AEFEntry` fields
 3. **Validation Strategy**: Unknown extensions pass validation if base fields are valid
 4. **Optional Schemas**: Vendors MAY provide JSON schemas for strict validation
@@ -13,7 +15,7 @@ This document defines how to create extension schemas for domain-specific agent 
 
 | Prefix | Owner | Purpose |
 |--------|-------|---------|
-| `alf.*` | AEF Project | Official extensions |
+| `aef.*` | AEF Project | Official extensions |
 | `otel.*` | AEF Project | OpenTelemetry compatibility |
 | `langchain.*` | Reserved | Future LangChain adapter |
 | `anthropic.*` | Reserved | Future Anthropic extensions |

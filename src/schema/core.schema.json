@@ -304,8 +304,8 @@
           "properties": {
             "type": {
               "type": "string",
-              "pattern": "^[a-z][a-z0-9]*\\.[a-z][a-z0-9]*\\.[a-z][a-z0-9]*$",
-              "description": "Extension type (vendor.category.type pattern)"
+              "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$",
+              "description": "Extension type (vendor.category.type pattern, 3+ segments)"
             }
           }
         }

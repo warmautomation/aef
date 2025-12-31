@@ -9,9 +9,11 @@ import addFormats from 'ajv-formats';
 import coreSchema from './schema/core.schema.json' with { type: 'json' };
 import { isCoreEntry, isExtensionEntry, hasValidBaseFields } from './types.js';
 
-// Initialize AJV with the core schema
-const ajv = new Ajv.default({ allErrors: true, strict: false });
-addFormats.default(ajv);
+// Initialize AJV with the core schema (cross-runtime compatible)
+const AjvConstructor = (Ajv as any).default || Ajv;
+const addFormatsFunc = (addFormats as any).default || addFormats;
+const ajv = new AjvConstructor({ allErrors: true, strict: false });
+addFormatsFunc(ajv);
 const validate = ajv.compile(coreSchema);
 
 /**

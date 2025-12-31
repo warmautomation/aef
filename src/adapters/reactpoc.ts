@@ -221,6 +221,9 @@ export const reactpocAdapter: LogAdapter<AsyncIterable<string>> = {
       };
       yield sessionStart;
 
+      // Track message count for session summary
+      let messageCount = 0;
+
       // Emit user message with question
       const userMessageId = generateId();
       const userMessage: Message = {
@@ -235,6 +238,7 @@ export const reactpocAdapter: LogAdapter<AsyncIterable<string>> = {
         content: episode.question,
       };
       yield userMessage;
+      messageCount++;
 
       // Track parent ID for chaining
       let lastEntryId = userMessageId;
@@ -430,6 +434,7 @@ export const reactpocAdapter: LogAdapter<AsyncIterable<string>> = {
           content: episode.predictedAnswer,
         };
         yield assistantMessage;
+        messageCount++;
         lastEntryId = assistantMessageId;
       }
 
@@ -442,7 +447,7 @@ export const reactpocAdapter: LogAdapter<AsyncIterable<string>> = {
         sid: sessionId,
         status: episode.status === 'success' ? 'complete' : 'error',
         summary: {
-          messages: 2, // user question + optional assistant answer
+          messages: messageCount,
           tool_calls: episode.metrics.toolCalls,
           duration_ms: Math.round(episode.metrics.totalLatencyMs),
           tokens: {

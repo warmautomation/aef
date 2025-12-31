@@ -47,25 +47,25 @@ describe('semantic validation', () => {
   });
 
   describe('MUST violations', () => {
-    describe('session-start-first (§4.1)', () => {
+    describe('session-start-first (§3.1.4)', () => {
       it('rejects session.start not at beginning', async () => {
         const entries = await loadFixture('invalid/session-start-not-first.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'session-start-first')).toBe(true);
         const error = result.errors.find((e) => e.rule === 'session-start-first');
-        expect(error?.specRef).toBe('§4.1');
+        expect(error?.specRef).toBe('§3.1.4');
       });
     });
 
-    describe('session-end-last (§4.2)', () => {
+    describe('session-end-last (§3.1.4)', () => {
       it('rejects session.end not at end', async () => {
         const entries = await loadFixture('invalid/session-end-not-last.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'session-end-last')).toBe(true);
         const error = result.errors.find((e) => e.rule === 'session-end-last');
-        expect(error?.specRef).toBe('§4.2');
+        expect(error?.specRef).toBe('§3.1.4');
       });
     });
 
@@ -80,14 +80,14 @@ describe('semantic validation', () => {
       });
     });
 
-    describe('seq-monotonic (§3.2)', () => {
+    describe('seq-monotonic (§3.2.1)', () => {
       it('rejects decreasing seq values', async () => {
         const entries = await loadFixture('invalid/decreasing-seq.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'seq-monotonic')).toBe(true);
         const error = result.errors.find((e) => e.rule === 'seq-monotonic');
-        expect(error?.specRef).toBe('§3.2');
+        expect(error?.specRef).toBe('§3.2.1');
       });
 
       it('accepts entries without seq (optional field)', () => {

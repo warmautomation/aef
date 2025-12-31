@@ -452,7 +452,7 @@ Examples:
 
 | Prefix | Owner |
 |--------|-------|
-| `alf.*` | Official AEF extensions |
+| `aef.*` | Official AEF extensions |
 | `otel.*` | OpenTelemetry compatibility |
 
 ### 5.3 Extension Validation

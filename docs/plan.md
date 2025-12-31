@@ -218,7 +218,7 @@ Every AEF entry MUST contain these fields:
 Extensions use dotted namespaces: `<vendor>.<category>.<type>`
 
 Reserved vendor prefixes:
-- `alf.*` - Official AEF extensions
+- `aef.*` - Official AEF extensions
 - `otel.*` - OpenTelemetry compatibility
 
 Examples:

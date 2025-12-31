@@ -118,6 +118,11 @@ export const claudeCodeAdapter: LogAdapter<AsyncIterable<string>> = {
     let totalOutputTokens = 0;
     let seq = 0;
 
+    // Track tool call_id → AEF entry ID for proper parent linking
+    const toolCallEntryIds = new Map<string, string>();
+    // Track last tool result ID for assistant message parent linking
+    let lastToolResultId: string | undefined;
+
     // Emit session.start
     const sessionStart: SessionStart = {
       v: 1,
@@ -150,7 +155,10 @@ export const claudeCodeAdapter: LogAdapter<AsyncIterable<string>> = {
 
       // Create message entry
       const messageId = entry.uuid;
-      const parentId = entry.parentUuid ?? lastEntryId;
+      // Assistant messages following tool results should link to the last tool.result
+      const parentId = role === 'assistant' && lastToolResultId
+        ? lastToolResultId
+        : entry.parentUuid ?? lastEntryId;
 
       // Convert content to AEF format
       let aefContent: string | ContentBlock[];
@@ -203,6 +211,11 @@ export const claudeCodeAdapter: LogAdapter<AsyncIterable<string>> = {
       yield message;
       messageCount++;
 
+      // Reset lastToolResultId after assistant message uses it
+      if (role === 'assistant') {
+        lastToolResultId = undefined;
+      }
+
       // Track token usage
       if (entry.message.usage) {
         totalInputTokens += entry.message.usage.input_tokens ?? 0;
@@ -214,9 +227,10 @@ export const claudeCodeAdapter: LogAdapter<AsyncIterable<string>> = {
         for (const block of content) {
           if (block.type === 'tool_use') {
             const toolCallId = block.id ?? generateId();
+            const toolCallEntryId = generateId();
             const toolCall: ToolCall = {
               v: 1,
-              id: generateId(),
+              id: toolCallEntryId,
               ts: timestamp,
               type: 'tool.call',
               sid: sessionId,
@@ -225,24 +239,32 @@ export const claudeCodeAdapter: LogAdapter<AsyncIterable<string>> = {
               args: block.input ?? {},
               call_id: toolCallId,
             };
+            // Store mapping for tool.result parent linking
+            toolCallEntryIds.set(toolCallId, toolCallEntryId);
             yield toolCall;
             toolCallCount++;
           } else if (block.type === 'tool_result') {
+            const callId = block.tool_use_id;
+            const toolResultEntryId = generateId();
+            // Parent is the corresponding tool.call, or message if not found
+            const toolResultPid = callId ? toolCallEntryIds.get(callId) ?? messageId : messageId;
             const toolResult: ToolResult = {
               v: 1,
-              id: generateId(),
+              id: toolResultEntryId,
               ts: timestamp,
               type: 'tool.result',
               sid: sessionId,
-              pid: messageId,
+              pid: toolResultPid,
               tool: 'unknown', // Claude Code doesn't track tool name in result
-              call_id: block.tool_use_id,
+              call_id: callId,
               result: block.content,
               success: !block.is_error,
               error: block.is_error
                 ? { message: block.content ?? 'Tool execution failed' }
                 : undefined,
             };
+            // Track for assistant message parent linking
+            lastToolResultId = toolResultEntryId;
             yield toolResult;
           }
         }

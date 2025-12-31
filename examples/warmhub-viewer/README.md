@@ -1,6 +1,6 @@
 # WarmHub Viewer Plugin
 
-This example demonstrates how to create a custom ALF viewer plugin for domain-specific entry types.
+This example demonstrates how to create a custom AEF viewer plugin for domain-specific entry types.
 
 ## Overview
 
@@ -13,23 +13,23 @@ The WarmHub plugin provides specialized visualization for belief-conditioned ReA
 
 ## Usage
 
-### With the ALF CLI
+### With the AEF CLI
 
 ```bash
 # From the repository root
-bun alf view trace.jsonl --plugin examples/warmhub-viewer/plugin.ts -o output.html
+bun aef view trace.jsonl --plugin examples/warmhub-viewer/plugin.ts -o output.html
 ```
 
 ### Programmatically
 
 ```typescript
-import { generateHtml, PluginRegistry } from '@warmautomation/alf';
+import { generateHtml, PluginRegistry } from '@warmautomation/aef';
 import { warmhubPlugin } from './examples/warmhub-viewer/plugin.js';
 
 const registry = new PluginRegistry();
 registry.register(warmhubPlugin);
 
-const html = generateHtml(entries, { registry });
+const html = generateHtml(entries, {}, registry);
 ```
 
 ### Run the Example
@@ -45,7 +45,7 @@ bun examples/warmhub-viewer/view.ts my-trace.jsonl my-output.html
 ### 1. Define Your Plugin
 
 ```typescript
-import type { ViewerPlugin } from '@warmautomation/alf';
+import type { ViewerPlugin } from '@warmautomation/aef';
 
 export const myPlugin: ViewerPlugin = {
   // Namespace pattern - matches entry types like "myvendor.category.type"
@@ -242,5 +242,5 @@ bun test examples/warmhub-viewer/plugin.test.ts
 
 - `plugin.ts` - The WarmHub plugin implementation
 - `plugin.test.ts` - Plugin tests
-- `sample-trace.jsonl` - Example ALF file with WarmHub entries
+- `sample-trace.jsonl` - Example AEF file with WarmHub entries
 - `view.ts` - Example script for generating HTML

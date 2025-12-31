@@ -158,6 +158,9 @@ program
           process.exit(1);
         }
       }
+
+      // Initialize all registered plugins
+      await registry.initialize();
     }
 
     const fileHandle = Bun.file(file);
