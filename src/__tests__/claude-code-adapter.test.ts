@@ -5,7 +5,14 @@
 import { describe, it, expect } from 'bun:test';
 import { claudeCodeAdapter } from '../adapters/claude-code.js';
 import { validateAEFEntry } from '../validator.js';
-import type { AnyAEFEntry } from '../types.js';
+import type {
+  AnyAEFEntry,
+  SessionStart,
+  SessionEnd,
+  Message,
+  ToolCall,
+  ToolResult,
+} from '../types.js';
 
 // Helper to create async iterable from lines
 async function* linesFromArray(lines: string[]): AsyncIterable<string> {
@@ -97,7 +104,7 @@ describe('claudeCodeAdapter', () => {
 
     it('extracts session metadata correctly', async () => {
       const entries = await collectEntries(simpleConversation);
-      const sessionStart = entries[0] as AnyAEFEntry;
+      const sessionStart = entries[0] as SessionStart;
 
       expect(sessionStart.type).toBe('session.start');
       expect(sessionStart.sid).toBe('session-123');
@@ -112,26 +119,26 @@ describe('claudeCodeAdapter', () => {
       const entries = await collectEntries(simpleConversation);
 
       const userMessage = entries.find(
-        (e) => e.type === 'message' && (e as AnyAEFEntry).role === 'user'
+        (e) => e.type === 'message' && (e as Message).role === 'user'
       );
       const assistantMessage = entries.find(
-        (e) => e.type === 'message' && (e as AnyAEFEntry).role === 'assistant'
+        (e) => e.type === 'message' && (e as Message).role === 'assistant'
       );
 
       expect(userMessage).toBeDefined();
       expect(assistantMessage).toBeDefined();
-      expect((assistantMessage as AnyAEFEntry).pid).toBe('user-1');
+      expect(assistantMessage!.pid).toBe('user-1');
     });
 
     it('calculates session summary correctly', async () => {
       const entries = await collectEntries(simpleConversation);
-      const sessionEnd = entries[entries.length - 1] as AnyAEFEntry;
+      const sessionEnd = entries[entries.length - 1] as SessionEnd;
 
       expect(sessionEnd.type).toBe('session.end');
       expect(sessionEnd.status).toBe('complete');
-      expect(sessionEnd.summary.messages).toBe(2);
-      expect(sessionEnd.summary.tool_calls).toBe(0);
-      expect(sessionEnd.summary.tokens).toEqual({ input: 10, output: 20 });
+      expect(sessionEnd.summary?.messages).toBe(2);
+      expect(sessionEnd.summary?.tool_calls).toBe(0);
+      expect(sessionEnd.summary?.tokens).toEqual({ input: 10, output: 20 });
     });
   });
 
@@ -201,22 +208,22 @@ describe('claudeCodeAdapter', () => {
 
     it('extracts tool.call entries from assistant messages', async () => {
       const entries = await collectEntries(toolConversation);
-      const toolCalls = entries.filter((e) => e.type === 'tool.call');
+      const toolCalls = entries.filter((e) => e.type === 'tool.call') as ToolCall[];
 
       expect(toolCalls.length).toBe(1);
-      expect((toolCalls[0] as AnyAEFEntry).tool).toBe('Bash');
-      expect((toolCalls[0] as AnyAEFEntry).call_id).toBe('tool-call-1');
-      expect((toolCalls[0] as AnyAEFEntry).args).toEqual({ command: 'ls -la' });
+      expect(toolCalls[0].tool).toBe('Bash');
+      expect(toolCalls[0].call_id).toBe('tool-call-1');
+      expect(toolCalls[0].args).toEqual({ command: 'ls -la' });
     });
 
     it('extracts tool.result entries from user messages', async () => {
       const entries = await collectEntries(toolConversation);
-      const toolResults = entries.filter((e) => e.type === 'tool.result');
+      const toolResults = entries.filter((e) => e.type === 'tool.result') as ToolResult[];
 
       expect(toolResults.length).toBe(1);
-      expect((toolResults[0] as AnyAEFEntry).call_id).toBe('tool-call-1');
-      expect((toolResults[0] as AnyAEFEntry).success).toBe(true);
-      expect((toolResults[0] as AnyAEFEntry).result).toContain('README.md');
+      expect(toolResults[0].call_id).toBe('tool-call-1');
+      expect(toolResults[0].success).toBe(true);
+      expect(toolResults[0].result).toContain('README.md');
     });
 
     it('produces valid AEF entries for tool calls', async () => {
@@ -230,9 +237,9 @@ describe('claudeCodeAdapter', () => {
 
     it('counts tool calls in session summary', async () => {
       const entries = await collectEntries(toolConversation);
-      const sessionEnd = entries[entries.length - 1] as AnyAEFEntry;
+      const sessionEnd = entries[entries.length - 1] as SessionEnd;
 
-      expect(sessionEnd.summary.tool_calls).toBe(1);
+      expect(sessionEnd.summary?.tool_calls).toBe(1);
     });
   });
 
@@ -268,12 +275,12 @@ describe('claudeCodeAdapter', () => {
       ];
 
       const entries = await collectEntries(lines);
-      const toolResult = entries.find((e) => e.type === 'tool.result') as AnyAEFEntry;
+      const toolResult = entries.find((e) => e.type === 'tool.result') as ToolResult;
 
       expect(toolResult).toBeDefined();
       expect(toolResult.success).toBe(false);
       expect(toolResult.error).toBeDefined();
-      expect(toolResult.error.message).toBe('Permission denied');
+      expect(toolResult.error?.message).toBe('Permission denied');
     });
 
     it('skips unparseable lines', async () => {
@@ -347,7 +354,7 @@ describe('claudeCodeAdapter', () => {
       ];
 
       const entries = await collectEntries(lines);
-      const messages = entries.filter((e) => e.type === 'message') as AnyAEFEntry[];
+      const messages = entries.filter((e) => e.type === 'message') as Message[];
 
       expect(messages.length).toBe(4);
       expect(messages[0].seq).toBe(0);
@@ -385,10 +392,10 @@ describe('claudeCodeAdapter', () => {
       ];
 
       const entries = await collectEntries(lines);
-      const sessionEnd = entries.find((e) => e.type === 'session.end') as AnyAEFEntry;
+      const sessionEnd = entries.find((e) => e.type === 'session.end') as SessionEnd;
 
-      expect(sessionEnd.summary.tokens.input).toBe(250);
-      expect(sessionEnd.summary.tokens.output).toBe(125);
+      expect(sessionEnd.summary?.tokens?.input).toBe(250);
+      expect(sessionEnd.summary?.tokens?.output).toBe(125);
     });
 
     it('includes cached tokens in message entry', async () => {
@@ -412,11 +419,11 @@ describe('claudeCodeAdapter', () => {
       ];
 
       const entries = await collectEntries(lines);
-      const message = entries.find((e) => e.type === 'message') as AnyAEFEntry;
+      const message = entries.find((e) => e.type === 'message') as Message;
 
-      expect(message.tokens.input).toBe(100);
-      expect(message.tokens.output).toBe(50);
-      expect(message.tokens.cached).toBe(700);
+      expect(message.tokens?.input).toBe(100);
+      expect(message.tokens?.output).toBe(50);
+      expect(message.tokens?.cached).toBe(700);
     });
   });
 });

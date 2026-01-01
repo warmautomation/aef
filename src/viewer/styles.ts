@@ -132,15 +132,32 @@ body {
   overflow-x: auto;
 }
 
+.aef-sequence {
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: 11px;
+  color: var(--aef-muted);
+  margin-left: 8px;
+}
+
 .aef-collapsible {
   cursor: pointer;
+}
+
+.aef-collapsible::after {
+  content: ' ▶';
+  font-size: 10px;
+}
+
+.aef-collapsible.expanded::after {
+  content: ' ▼';
 }
 
 .aef-collapsible-content {
   display: none;
 }
 
-.aef-collapsible.expanded .aef-collapsible-content {
+.aef-collapsible.expanded + .aef-collapsible-content,
+.aef-collapsible.expanded ~ .aef-collapsible-content {
   display: block;
 }
 

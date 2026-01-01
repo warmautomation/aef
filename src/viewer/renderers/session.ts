@@ -8,7 +8,6 @@ import { escapeHtml, formatTimestamp, formatDuration } from '../utils.js';
  * Render a session.start entry
  */
 export function renderSessionStart(entry: SessionStart, ctx: RenderContext): RenderedEntry {
-  const timestamp = formatTimestamp(entry.ts);
   const agent = escapeHtml(entry.agent);
   const model = entry.model ? escapeHtml(entry.model) : 'unknown';
   const version = entry.version ? escapeHtml(entry.version) : '';
@@ -25,7 +24,13 @@ export function renderSessionStart(entry: SessionStart, ctx: RenderContext): Ren
     html += ` <span class="aef-meta-item"><strong>Workspace:</strong> ${workspace}</span>`;
   }
   html += `</div>`;
-  html += `<div class="aef-timestamp">${timestamp}</div>`;
+  if (ctx.options.showSequence && entry.seq !== undefined) {
+    html += `<div class="aef-sequence">#${entry.seq}</div>`;
+  }
+  if (ctx.options.showTimestamps !== false) {
+    const timestamp = formatTimestamp(entry.ts);
+    html += `<div class="aef-timestamp">${timestamp}</div>`;
+  }
   html += `</div>`;
 
   return {
@@ -40,14 +45,19 @@ export function renderSessionStart(entry: SessionStart, ctx: RenderContext): Ren
  * Render a session.end entry
  */
 export function renderSessionEnd(entry: SessionEnd, ctx: RenderContext): RenderedEntry {
-  const timestamp = formatTimestamp(entry.ts);
   const status = escapeHtml(entry.status);
   const statusClass = entry.status === 'complete' ? 'aef-success' : 'aef-failure';
 
   let html = `<div class="aef-session-footer">`;
   html += `<div class="aef-entry-header">`;
   html += `<span class="aef-badge aef-badge-system">Session End</span>`;
-  html += `<span class="aef-timestamp">${timestamp}</span>`;
+  if (ctx.options.showSequence && entry.seq !== undefined) {
+    html += `<span class="aef-sequence">#${entry.seq}</span>`;
+  }
+  if (ctx.options.showTimestamps !== false) {
+    const timestamp = formatTimestamp(entry.ts);
+    html += `<span class="aef-timestamp">${timestamp}</span>`;
+  }
   html += `</div>`;
   html += `<div class="aef-session-status ${statusClass}">Status: ${status}</div>`;
 

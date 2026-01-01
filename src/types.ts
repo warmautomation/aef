@@ -130,10 +130,15 @@ export type CoreEntry =
   | ErrorEntry;
 
 /**
- * Any AEF entry - core or extension
- * Extensions have the base fields plus arbitrary additional fields
+ * Extension entry - has base fields plus arbitrary additional fields
  */
-export type AnyAEFEntry = AEFEntry & Record<string, unknown>;
+export type ExtensionEntry = AEFEntry & Record<string, unknown>;
+
+/**
+ * Any AEF entry - core or extension
+ * CoreEntry types are strongly typed, extension entries allow arbitrary fields
+ */
+export type AnyAEFEntry = CoreEntry | ExtensionEntry;
 
 // =============================================================================
 // Type Guards

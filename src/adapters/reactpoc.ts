@@ -12,6 +12,7 @@
 import type { LogAdapter } from './adapter.js';
 import { generateId } from './adapter.js';
 import type {
+  AEFEntry,
   AnyAEFEntry,
   SessionStart,
   SessionEnd,
@@ -107,7 +108,7 @@ interface RPEpisode {
 // =============================================================================
 
 /** warmhub.react.step extension entry */
-interface ReactStepEntry extends AnyAEFEntry {
+interface ReactStepEntry extends AEFEntry {
   type: 'warmhub.react.step';
   step: number;
   thought?: string;
@@ -116,10 +117,11 @@ interface ReactStepEntry extends AnyAEFEntry {
   observation?: string;
   latency_ms?: number;
   tokens?: { input: number; output: number };
+  [key: string]: unknown;
 }
 
 /** warmhub.react.episode extension entry */
-interface ReactEpisodeEntry extends AnyAEFEntry {
+interface ReactEpisodeEntry extends AEFEntry {
   type: 'warmhub.react.episode';
   question_id: string;
   question: string;
@@ -139,10 +141,11 @@ interface ReactEpisodeEntry extends AnyAEFEntry {
     uncertainty_reduction: number;
     finish_gate_respected: boolean;
   };
+  [key: string]: unknown;
 }
 
 /** warmhub.belief.query extension entry */
-interface BeliefQueryEntry extends AnyAEFEntry {
+interface BeliefQueryEntry extends AEFEntry {
   type: 'warmhub.belief.query';
   query: string;
   snapshot: {
@@ -157,10 +160,11 @@ interface BeliefQueryEntry extends AnyAEFEntry {
     finish_ready: boolean;
     leading?: string;
   };
+  [key: string]: unknown;
 }
 
 /** warmhub.belief.update extension entry */
-interface BeliefUpdateEntry extends AnyAEFEntry {
+interface BeliefUpdateEntry extends AEFEntry {
   type: 'warmhub.belief.update';
   assertion: {
     id: string;
@@ -170,6 +174,7 @@ interface BeliefUpdateEntry extends AnyAEFEntry {
     inconsistent_with?: string[];
   };
   snapshot_after?: BeliefQueryEntry['snapshot'];
+  [key: string]: unknown;
 }
 
 // =============================================================================

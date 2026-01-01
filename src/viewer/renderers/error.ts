@@ -8,7 +8,6 @@ import { escapeHtml, formatTimestamp } from '../utils.js';
  * Render an error entry
  */
 export function renderError(entry: ErrorEntry, ctx: RenderContext): RenderedEntry {
-  const timestamp = formatTimestamp(entry.ts);
   const message = escapeHtml(entry.message);
   const code = entry.code ? escapeHtml(entry.code) : null;
   const recoverable = entry.recoverable;
@@ -18,7 +17,13 @@ export function renderError(entry: ErrorEntry, ctx: RenderContext): RenderedEntr
   if (code) {
     html += `<span class="aef-error-code">${code}</span>`;
   }
-  html += `<span class="aef-timestamp">${timestamp}</span>`;
+  if (ctx.options.showSequence && entry.seq !== undefined) {
+    html += `<span class="aef-sequence">#${entry.seq}</span>`;
+  }
+  if (ctx.options.showTimestamps !== false) {
+    const timestamp = formatTimestamp(entry.ts);
+    html += `<span class="aef-timestamp">${timestamp}</span>`;
+  }
   html += `</div>`;
 
   html += `<div class="aef-error-content">`;

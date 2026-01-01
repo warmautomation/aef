@@ -52,14 +52,19 @@ function renderContentBlocks(blocks: ContentBlock[]): string {
  * Render a message entry
  */
 export function renderMessage(entry: Message, ctx: RenderContext): RenderedEntry {
-  const timestamp = formatTimestamp(entry.ts);
   const badgeClass = getBadgeClass(entry.role);
   const messageClass = getMessageClass(entry.role);
   const roleLabel = entry.role.charAt(0).toUpperCase() + entry.role.slice(1);
 
   let html = `<div class="aef-entry-header">`;
   html += `<span class="aef-badge ${badgeClass}">${roleLabel}</span>`;
-  html += `<span class="aef-timestamp">${timestamp}</span>`;
+  if (ctx.options.showSequence && entry.seq !== undefined) {
+    html += `<span class="aef-sequence">#${entry.seq}</span>`;
+  }
+  if (ctx.options.showTimestamps !== false) {
+    const timestamp = formatTimestamp(entry.ts);
+    html += `<span class="aef-timestamp">${timestamp}</span>`;
+  }
   html += `</div>`;
 
   // Render content based on type
