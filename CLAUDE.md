@@ -21,3 +21,46 @@ bun test             # Run tests
 bun aef validate     # Validate AEF file
 bun aef convert      # Convert logs to AEF format
 ```
+
+## Work Tracking with Beads
+
+**All work in this project MUST be tracked using beads.** Beads is the required issue tracker with first-class dependency support.
+
+### Core Philosophy: Nothing Falls Through Cracks
+
+- Every objective, task, and discovered issue becomes a bead
+- Dependencies are explicit and enforced
+- Work persists across sessions
+- No work is lost or forgotten
+
+### Essential Commands
+
+```bash
+bd ready              # Show work ready to start
+bd show <id>          # View bead details
+bd create --title="..." --type=task --priority=2  # Create bead
+bd update <id> --status=in_progress  # Start work
+bd close <id>         # Complete work
+bd sync               # Sync with git
+```
+
+### Session Close Protocol
+
+Before saying "done", you MUST:
+```bash
+git status            # Check changes
+git add <files>       # Stage code
+bd sync               # Sync beads
+git commit -m "..."   # Commit
+git push              # Push
+```
+
+## Harness System
+
+For complex multi-agent workflows, install the `warmhub-orchestration` plugin:
+
+```bash
+claude plugin install warmhub-orchestration
+```
+
+This provides `/harness`, `/harness-work`, `/harness-status`, and related commands for coordinated multi-agent execution with beads integration.
