@@ -241,6 +241,35 @@ describe('claudeCodeAdapter', () => {
 
       expect(sessionEnd.summary?.tool_calls).toBe(1);
     });
+
+    it('tool.result.pid points to corresponding tool.call.id', async () => {
+      const entries = await collectEntries(toolConversation);
+      const toolCall = entries.find((e) => e.type === 'tool.call') as ToolCall;
+      const toolResult = entries.find((e) => e.type === 'tool.result') as ToolResult;
+
+      expect(toolCall).toBeDefined();
+      expect(toolResult).toBeDefined();
+      // The tool.result should have pid pointing to tool.call's id, not the message
+      expect(toolResult.pid).toBe(toolCall.id);
+    });
+
+    it('assistant message after tool.result has pid pointing to tool.result', async () => {
+      const entries = await collectEntries(toolConversation);
+      const toolResult = entries.find((e) => e.type === 'tool.result') as ToolResult;
+      // Find the final assistant message (after the tool result)
+      const messages = entries.filter((e) => e.type === 'message') as Message[];
+      const finalAssistantMessage = messages.find(
+        (m) => m.role === 'assistant' && m.content === 'The directory contains README.md.' ||
+               (Array.isArray(m.content) && m.content.some(
+                 (c) => c.type === 'text' && (c as { text: string }).text === 'The directory contains README.md.'
+               ))
+      );
+
+      expect(toolResult).toBeDefined();
+      expect(finalAssistantMessage).toBeDefined();
+      // The assistant message following the tool result should have pid pointing to tool.result
+      expect(finalAssistantMessage!.pid).toBe(toolResult.id);
+    });
   });
 
   describe('error handling', () => {
