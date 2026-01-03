@@ -214,6 +214,94 @@ describe('validateAEFEntry', () => {
       };
       expect(validateAEFEntry(extEntry).entryType).toBe('extension');
     });
+
+    it('validates extensions with 4+ segments', () => {
+      const entry = {
+        v: 1,
+        id: '0194a1b2c3d4-e5f6',
+        ts: 1704067200000,
+        type: 'vendor.category.subcategory.type',
+        sid: 'session-abc123',
+      };
+      const result = validateAEFEntry(entry);
+      expect(result.valid).toBe(true);
+      expect(result.entryType).toBe('extension');
+    });
+
+    it('validates extensions with 5 segments', () => {
+      const entry = {
+        v: 1,
+        id: '0194a1b2c3d4-e5f6',
+        ts: 1704067200000,
+        type: 'org.team.project.module.event',
+        sid: 'session-abc123',
+      };
+      const result = validateAEFEntry(entry);
+      expect(result.valid).toBe(true);
+      expect(result.entryType).toBe('extension');
+    });
+
+    it('validates extensions with hyphens in segments', () => {
+      const entry = {
+        v: 1,
+        id: '0194a1b2c3d4-e5f6',
+        ts: 1704067200000,
+        type: 'my-company.my-category.my-type',
+        sid: 'session-abc123',
+      };
+      const result = validateAEFEntry(entry);
+      expect(result.valid).toBe(true);
+      expect(result.entryType).toBe('extension');
+    });
+
+    it('validates extensions with digits and hyphens', () => {
+      const entry = {
+        v: 1,
+        id: '0194a1b2c3d4-e5f6',
+        ts: 1704067200000,
+        type: 'vendor2.category-v1.type-2024',
+        sid: 'session-abc123',
+      };
+      const result = validateAEFEntry(entry);
+      expect(result.valid).toBe(true);
+      expect(result.entryType).toBe('extension');
+    });
+
+    it('rejects extensions with only 2 segments', () => {
+      const entry = {
+        v: 1,
+        id: '0194a1b2c3d4-e5f6',
+        ts: 1704067200000,
+        type: 'vendor.type',
+        sid: 'session-abc123',
+      };
+      const result = validateAEFEntry(entry);
+      expect(result.valid).toBe(false);
+    });
+
+    it('rejects extensions with uppercase letters', () => {
+      const entry = {
+        v: 1,
+        id: '0194a1b2c3d4-e5f6',
+        ts: 1704067200000,
+        type: 'Vendor.Category.Type',
+        sid: 'session-abc123',
+      };
+      const result = validateAEFEntry(entry);
+      expect(result.valid).toBe(false);
+    });
+
+    it('rejects extensions starting with digits', () => {
+      const entry = {
+        v: 1,
+        id: '0194a1b2c3d4-e5f6',
+        ts: 1704067200000,
+        type: '123vendor.category.type',
+        sid: 'session-abc123',
+      };
+      const result = validateAEFEntry(entry);
+      expect(result.valid).toBe(false);
+    });
   });
 });
 
