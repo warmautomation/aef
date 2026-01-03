@@ -15,7 +15,7 @@ import { generateHtml } from './viewer/html.js';
 import { PluginRegistry } from './viewer/registry.js';
 import type { ViewerPlugin } from './viewer/plugin.js';
 import type { LogAdapter } from './adapters/adapter.js';
-import type { AEFEntry } from './types.js';
+import type { AEFEntry, SessionStart, Message } from './types.js';
 import type { ViewerOptions } from './viewer/types.js';
 
 const program = new Command();
@@ -182,5 +182,100 @@ program
       console.log(html);
     }
   });
+
+program
+  .command('info <file>')
+  .description('Display metadata about an AEF JSONL file')
+  .option('--json', 'Output in JSON format')
+  .action(async (file: string, options: { json?: boolean }) => {
+    const fileHandle = Bun.file(file);
+    const size = fileHandle.size;
+    const text = await fileHandle.text();
+    const lines = text.split('\n').filter((line) => line.trim() !== '');
+    const entries: AEFEntry[] = lines.map((line) => JSON.parse(line) as AEFEntry);
+
+    // Gather metadata
+    const typeCounts: Record<string, number> = {};
+    const sessions = new Set<string>();
+    const agents = new Set<string>();
+    const models = new Set<string>();
+    let minTs = Infinity;
+    let maxTs = -Infinity;
+
+    for (const entry of entries) {
+      typeCounts[entry.type] = (typeCounts[entry.type] || 0) + 1;
+      sessions.add(entry.sid);
+      if (entry.ts < minTs) minTs = entry.ts;
+      if (entry.ts > maxTs) maxTs = entry.ts;
+
+      if (entry.type === 'session.start') {
+        const session = entry as SessionStart;
+        if (session.agent) agents.add(session.agent);
+        if (session.model) models.add(session.model);
+      }
+
+      // Also check for model in message entries
+      if (entry.type === 'message') {
+        const message = entry as Message;
+        if (message.model) models.add(message.model);
+      }
+    }
+
+    const duration = maxTs > minTs ? maxTs - minTs : 0;
+
+    const info = {
+      file: file,
+      size: size,
+      entries: entries.length,
+      sessions: sessions.size,
+      types: typeCounts,
+      timeRange: {
+        start: minTs !== Infinity ? new Date(minTs).toISOString() : null,
+        end: maxTs !== -Infinity ? new Date(maxTs).toISOString() : null,
+        durationMs: duration,
+      },
+      agents: [...agents],
+      models: [...models],
+    };
+
+    if (options.json) {
+      console.log(JSON.stringify(info, null, 2));
+    } else {
+      console.log(`File: ${info.file}`);
+      console.log(`Size: ${formatBytes(info.size)}`);
+      console.log(`Entries: ${info.entries}`);
+      console.log(`Sessions: ${info.sessions}`);
+      console.log(`\nEntry Types:`);
+      for (const [type, count] of Object.entries(info.types).sort()) {
+        console.log(`  ${type}: ${count}`);
+      }
+      if (info.timeRange.start && info.timeRange.end) {
+        console.log(`\nTime Range:`);
+        console.log(`  Start: ${info.timeRange.start}`);
+        console.log(`  End: ${info.timeRange.end}`);
+        console.log(`  Duration: ${formatDuration(info.timeRange.durationMs)}`);
+      }
+      if (info.agents.length > 0) {
+        console.log(`\nAgents: ${info.agents.join(', ')}`);
+      }
+      if (info.models.length > 0) {
+        console.log(`Models: ${info.models.join(', ')}`);
+      }
+    }
+  });
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 3600000) return `${(ms / 60000).toFixed(1)}m`;
+  return `${(ms / 3600000).toFixed(1)}h`;
+}
 
 program.parse();
