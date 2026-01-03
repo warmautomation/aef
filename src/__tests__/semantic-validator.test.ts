@@ -154,14 +154,14 @@ describe('semantic validation', () => {
       });
     });
 
-    describe('pid-exists (§6.2)', () => {
+    describe('pid-exists (§3.2.2)', () => {
       it('rejects pid pointing to future entry', async () => {
         const entries = await loadFixture('invalid/pid-future-ref.aef.jsonl');
         const result = validateSemantics(entries);
         expect(result.valid).toBe(false);
         expect(result.errors.some((e) => e.rule === 'pid-exists')).toBe(true);
         const error = result.errors.find((e) => e.rule === 'pid-exists');
-        expect(error?.specRef).toBe('§6.2');
+        expect(error?.specRef).toBe('§3.2.2');
         expect(error?.message).toContain('future');
       });
 
@@ -187,9 +187,27 @@ describe('semantic validation', () => {
         const result = validateSemantics(entries);
         expect(result.errors.filter((e) => e.rule === 'pid-exists')).toHaveLength(0);
       });
+
+      it('rejects pid pointing to entry in different session', () => {
+        // Two sessions in sequence, second session references first session
+        const entries = [
+          { v: 1 as const, id: '01', ts: 1000, type: 'session.start', sid: 's1', agent: 'test' },
+          { v: 1 as const, id: '02', ts: 1001, type: 'message', sid: 's1', role: 'user', content: 'hi' },
+          { v: 1 as const, id: '03', ts: 1002, type: 'session.end', sid: 's1', status: 'complete' },
+          { v: 1 as const, id: '04', ts: 2000, type: 'session.start', sid: 's2', agent: 'test' },
+          { v: 1 as const, id: '05', ts: 2001, type: 'message', sid: 's2', role: 'user', content: 'hi', pid: '02' }, // cross-session pid
+          { v: 1 as const, id: '06', ts: 2002, type: 'session.end', sid: 's2', status: 'complete' },
+        ];
+        const result = validateSemantics(entries);
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.rule === 'pid-same-session')).toBe(true);
+        const error = result.errors.find((e) => e.rule === 'pid-same-session');
+        expect(error?.specRef).toBe('§3.2.2');
+        expect(error?.message).toContain('different session');
+      });
     });
 
-    describe('deps-exist (§6.2)', () => {
+    describe('deps-exist (§3.2.3)', () => {
       it('rejects deps containing non-existent IDs', () => {
         const entries = [
           { v: 1 as const, id: '01', ts: 1000, type: 'session.start', sid: 's1', agent: 'test' },
@@ -225,11 +243,30 @@ describe('semantic validation', () => {
         const result = validateSemantics(entries);
         expect(result.errors.filter((e) => e.rule === 'deps-exist')).toHaveLength(0);
       });
+
+      it('rejects deps containing entry from different session', () => {
+        // Two sessions in sequence, second session deps references first session
+        const entries = [
+          { v: 1 as const, id: '01', ts: 1000, type: 'session.start', sid: 's1', agent: 'test' },
+          { v: 1 as const, id: '02', ts: 1001, type: 'tool.result', sid: 's1', tool: 'a', success: true, result: 'r1' },
+          { v: 1 as const, id: '03', ts: 1002, type: 'session.end', sid: 's1', status: 'complete' },
+          { v: 1 as const, id: '04', ts: 2000, type: 'session.start', sid: 's2', agent: 'test' },
+          { v: 1 as const, id: '05', ts: 2001, type: 'tool.result', sid: 's2', tool: 'b', success: true, result: 'r2' },
+          { v: 1 as const, id: '06', ts: 2002, type: 'message', sid: 's2', role: 'assistant', content: 'done', deps: ['02', '05'] }, // deps contains s1 entry
+          { v: 1 as const, id: '07', ts: 2003, type: 'session.end', sid: 's2', status: 'complete' },
+        ];
+        const result = validateSemantics(entries);
+        expect(result.valid).toBe(false);
+        expect(result.errors.some((e) => e.rule === 'deps-same-session')).toBe(true);
+        const error = result.errors.find((e) => e.rule === 'deps-same-session');
+        expect(error?.specRef).toBe('§3.2.3');
+        expect(error?.message).toContain('different session');
+      });
     });
   });
 
   describe('SHOULD violations (warnings)', () => {
-    describe('ts-monotonic (§3.2.1)', () => {
+    describe('ts-monotonic (§3.1.2)', () => {
       it('warns on decreasing timestamps', () => {
         const entries = [
           { v: 1 as const, id: '01', ts: 1000, type: 'session.start', sid: 's1', agent: 'test' },

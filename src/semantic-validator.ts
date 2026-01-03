@@ -277,7 +277,7 @@ function validateErrorRequired(entries: AEFEntry[], errors: SemanticError[]): vo
 }
 
 /**
- * §6.2: pid MUST reference an earlier entry in the file
+ * §3.2.2: pid MUST reference an earlier entry in the same session
  */
 function validatePidExists(
   entries: AEFEntry[],
@@ -293,21 +293,21 @@ function validatePidExists(
       errors.push({
         rule: 'pid-exists',
         message: `pid '${entry.pid}' references non-existent entry`,
-        specRef: '§6.2',
+        specRef: '§3.2.2',
         entryIds: [entry.id],
       });
     } else if (parent.index >= i) {
       errors.push({
         rule: 'pid-exists',
         message: `pid '${entry.pid}' references a future entry (must be earlier)`,
-        specRef: '§6.2',
+        specRef: '§3.2.2',
         entryIds: [entry.id, entry.pid],
       });
     } else if (parent.entry.sid !== entry.sid) {
       errors.push({
         rule: 'pid-same-session',
         message: `pid references entry in different session`,
-        specRef: '§3.1.4',
+        specRef: '§3.2.2',
         entryIds: [entry.id, entry.pid],
       });
     }
@@ -315,7 +315,7 @@ function validatePidExists(
 }
 
 /**
- * §6.2: All IDs in deps MUST reference earlier entries
+ * §3.2.3: All IDs in deps MUST reference earlier entries in the same session
  */
 function validateDepsExist(
   entries: AEFEntry[],
@@ -332,21 +332,21 @@ function validateDepsExist(
         errors.push({
           rule: 'deps-exist',
           message: `deps contains '${depId}' which references non-existent entry`,
-          specRef: '§6.2',
+          specRef: '§3.2.3',
           entryIds: [entry.id],
         });
       } else if (dep.index >= i) {
         errors.push({
           rule: 'deps-exist',
           message: `deps contains '${depId}' which references a future entry (must be earlier)`,
-          specRef: '§6.2',
+          specRef: '§3.2.3',
           entryIds: [entry.id, depId],
         });
       } else if (dep.entry.sid !== entry.sid) {
         errors.push({
           rule: 'deps-same-session',
           message: `deps contains entry from different session`,
-          specRef: '§3.1.4',
+          specRef: '§3.2.3',
           entryIds: [entry.id, depId],
         });
       }
